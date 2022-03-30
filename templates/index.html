@@ -1,0 +1,27 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>Grading form for {{studentsScriptFileName}}</title>
+    <style>
+        {% raw %}
+        body {background-color: white;}
+        {% endraw %}
+    </style>
+</head>
+<body>
+	<header>
+        <h1>Grading form for {{studentsScriptFileName}}</h1>
+	</header>	
+	<section>	
+        <ul>
+        {% for page in pages -%}
+            <li><a href="questions/{{ page }}/index.html" >{{ page }}<a/></li>    
+        {% endfor %}
+        </ul>
+	</section>
+	<footer>
+		<p>Created by Higher Diploma in Cloud and Data Centre Administration Deevlopement Team. </p>
+	</footer>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>Grading form for {{studentsScriptFileName}} - {{question}}</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link href='https://classic.yarnpkg.com/en/package/normalize.css' rel='stylesheet' type='text/css'>     
+    <link href='https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css' rel='stylesheet' type='text/css'>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha512-uto9mlQzrs59VwILcLiRYeLKPPbS/bT71da/OEBYEwcdNUk8jYIy+D176RYoop1Da+f9mvkYrmj5MCLZWEtQuA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css" integrity="sha512-aOG0c6nPNzGk+5zjwyJaoRUgCdOrfSDhmMID2u4+OIslr0GjpLKo7Xm0Ao3xmpM4T8AmIouRkqwj1nrdVsLKEQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <script>
+        $(document).ready( function () {          
+            const refreshMark = ()=>{
+                let fullMark = $('#fullMark').val();
+                let minimumSimilarity = $('#minimumSimilarity').val();
+                let granularity = $('#granularity').val();
+                $('.mark')
+                    .attr("max",$('#fullMark').val())
+                    .attr("step",$('#granularity').val())
+                .each(function( index ) {
+                    let similarity = $(this).data("similarity");                 
+                    if(similarity >= minimumSimilarity) $(this).val(fullMark);
+                    else{
+                        let mark = fullMark * similarity;
+                        mark = Math.floor(mark / granularity) * granularity;
+                        $(this).val(mark);
+                    }
+                });
+            };
+            
+            let table = $('#marksheet').DataTable({
+                order: [[ 3, "desc" ]],
+                paging: false,
+                autoWidth: true,
+                columnDefs: [
+                    { width: '50%', targets: 0 }
+                ],
+            } );
+            
+            $('a.toggle-vis').on( 'click', function (e) {
+                e.preventDefault();
+                // Get the column API object
+                let column = table.column( $(this).attr('data-column') );
+                // Toggle the visibility
+                column.visible( ! column.visible() );
+            } );
+            
+            $('#minimumSimilarity').on('change',function(e){
+                $('#currentSimilarity').html(e.target.value);
+                refreshMark();
+            });
+            
+            $('#granularity').on('change',function(e){
+                $('#currentGranularity').html(e.target.value);
+                refreshMark();
+            });
+            
+            $('#fullMark').on('change',function(e){
+                refreshMark();
+            });
+            refreshMark();   
+            
+
+            
+            
+            $('#dialog').dialog({ 
+                autoOpen: false, show: false,
+                maxHeight: $(window).height() - 100, 
+                minWidth: $(window).width() - 100 ,
+                resizable: true
+            })
+           
+            $('.answerImage').on('click',function(e){
+                 e.preventDefault();
+                console.log($(this).data());
+                let left = $(this).data('left');
+                let top = $(this).data('top');
+                let width = $(this).data('width');
+                let height = $(this).data('height');
+                
+                $('#left').val(left);
+                $('#top').val(top);
+                $('#width').val(width);
+                $('#height').val(height);
+                
+                $('#dialog').dialog('open');
+                $('#largeImage').attr('src', $(this).attr('src'));              
+            });
+            
+            $('.mark').on('keyup input', e => {
+                let mark = e.target.value;
+                $("#" + e.target.id + "-locked").html(mark);
+            });
+        
+            $('.lock').on('click', e => {
+                $("#" + e.target.id).html("");
+            });
+            
+            const download = (filename, text) => {
+              var element = document.createElement('a');
+              element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+              element.setAttribute('download', filename);
+              element.style.display = 'none';
+              document.body.appendChild(element);
+              element.click();
+              document.body.removeChild(element);
+            }
+            
+            $('#saveButton').on('click',function(e){
+                e.preventDefault();
+                let marks = $('.mark').map(function(){
+                    let overridedMark = $("#"+ this.id + "-locked").html();
+                    console.log(overridedMark);
+                    return {id: this.id.replace('mark-',''), mark: overridedMark?overridedMark:$(this).val()};
+                }); 
+                console.log(marks);
+                download('{{studentsScriptFileName}}-{{question}}.json',JSON.stringify(marks));
+            });
+            
+            const zoomImage = ()=>{
+                const zoom = $('#zoom').val();
+                let commonLeft = $('#left').val();
+                let commonTop = $('#top').val();
+                let commonWidth = $('#width').val();
+                let commonHeight = $('#height').val();
+                
+                console.log(commonLeft,commonTop,commonWidth,commonHeight);
+                
+                let left, top, width, height, imageWidth, imageHeight;
+{% for index, row in dataTable.iterrows() -%}     
+                
+                left = (commonLeft || {{row["BoundingBox"]["left"]}}) * zoom;
+                top = (commonTop || {{row["BoundingBox"]["top"]}}) * zoom;
+                width = (commonWidth || {{row["BoundingBox"]["width"]}}) * zoom;
+                height = (commonHeight || {{row["BoundingBox"]["height"]}}) * zoom;
+        
+                // imageWidth = $('#crop-{{row["RowNumber"]}}').prop('width') * zoom;
+                // imageHeight = $('#crop-{{row["RowNumber"]}}').prop('height') * zoom
+                // if(imageWidth !== 0 && imageHeight !== 0){
+                //     $('#crop-{{row["RowNumber"]}}').width(imageWidth);
+                //     $('#crop-{{row["RowNumber"]}}').height(imageHeight);
+                // }
+                $('#crop-{{row["RowNumber"]}}')
+                    .css('object-fit','none')
+                    .css('width', width + "px")
+                    .css('height', height + "px")
+                    .css('object-position', "-"+ left + "px -"+ top +"px")
+                    .css('transform-origin', "left top")
+                    .css('transform', `scale(${zoom})`);
+        
+{% endfor %}   
+                
+            };
+            $('#zoom').on('change',function(e){
+                $('#currentZoom').html(e.target.value);
+                zoomImage();
+            });
+        
+            $('.changeBoundBox').on('change',function(e){             
+                zoomImage();
+            });
+        
+            zoomImage();
+        } );
+    </script>
+    <style>
+        form.form {
+            display: table;
+        }
+
+        div.form {
+            display: table-row;
+        }
+
+        label, input {
+            display: table-cell;
+            margin-bottom: 10px;
+        }
+
+        label {
+            padding-right: 10px;
+        }
+        
+        input.mark {
+            width: 50px;
+        }
+        
+        .answerImage {
+     
+        }
+        body {background-color: white;}
+        
+ {% for index, row in dataTable.iterrows() -%}        
+        .crop-{{row["RowNumber"]}} {{"{"}}      
+            object-fit: none; 
+            object-position: -{{row["BoundingBox"]["left"]}}px -{{row["BoundingBox"]["top"]}}px;
+            width: {{row["BoundingBox"]["width"]}}px;
+            height: {{row["BoundingBox"]["height"]}}px;           
+        {{"}"}}
+{% endfor %}       
+    </style>
+</head>
+<body>
+	<header>
+        <a href="../../index.html">Back to the question list</a>        
+        <h1>Grading form for {{studentsScriptFileName}} - {{question}} (Answer: {{standardAnswer if standardAnswer is not none}})</h1>
+	</header>	
+	<section> 
+        <div id="dialog" title="Large Image">
+            <img id="largeImage" src="" style="vertical-align: top; padding: 0px 10px 10px 2px; width: 100%, height: 100%" />
+        </div>
+
+        <form action="" method="get" class="form">
+            <div class="form">
+                <label for="fullMark">The full mark of this question (1-100):</label>
+                <input type="number" id="fullMark" min="1" max="100" value="1">
+            </div>
+            <div class="form">
+                <label for="minimumSimilarity">The minimum Similarity value of full mark:</label>
+                <input type="range" id="minimumSimilarity" name="minimumSimilarity" min="0.1" max="1" value="0.8" step="0.1">
+                (<span id="currentSimilarity">0.8</span>)
+            </div>
+            <div class="form">
+                <label for="granularity">The granularity of mark:</label>
+                <input type="range" id="granularity" min="0" max="1" value="1" step="0.25">  
+                (<span id="currentGranularity">1</span>)   
+            </div> 
+            <div class="form">
+                <label for="zoom">Image Zoom:</label>
+                <input type="range" id="zoom" min="0.1" max="2" value="1" step="0.1">  
+                (<span id="currentZoom">1</span>)   
+            </div>
+            <div class="form">
+                <label for="left">Left:</label>
+                <input type="number" id="left" min="0" step="10" class="changeBoundBox">                   
+            </div>
+            <div class="form">
+                <label for="top">Top:</label>
+                <input type="number" id="top" min="0" step="10" class="changeBoundBox">                                  
+            </div>
+            <div class="form">
+                <label for="height">Height:</label>
+                <input type="number" id="height" min="0" step="10" class="changeBoundBox">                               
+            </div>
+                <div class="form">
+                <label for="width">Width:</label>
+                <input type="number" id="width" min="0" step="10" class="changeBoundBox">                                
+            </div>
+            <div class="form">
+                <input id="saveButton" type="submit" value="Save Mark Result">
+            </div>
+        </form>
+        <div>
+            Show/Hide column:
+            <a class="toggle-vis" data-column="0" href="#">Image</a> -
+            <a class="toggle-vis" data-column="1" href="#">Answer</a> - 
+            <a class="toggle-vis" data-column="2" href="#">Mark</a> - 
+            <a class="toggle-vis" data-column="3" href="#">Similarity</a> - 
+            <a class="toggle-vis" data-column="4" href="#">Confidence Score</a>        
+        </div>
+        <div>
+            <p>If your type in the mark, it will be locked. To unlock, click on the mark below the mark input.</p>
+        </div>
+        <form id="markForm" action="" method="get" class="form">
+            <table id="marksheet" class="display" style="width:100%">
+                <thead>
+                  <tr>
+                    <th>Image</th>
+                    <th>Answer</th>
+                    <th>Mark</th>                      
+                    <th>Similarity</th>
+                    <th>Confidence Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+{% for index, row in dataTable.iterrows() -%}
+                  <tr>          
+                    <td> 
+                        <div id="crop-{{row["RowNumber"]}}-container" >
+                            <img src="../../../{{row["Image"]}}" 
+                                 id="crop-{{row["RowNumber"]}}" 
+                                 class="answerImage crop-{{row["RowNumber"]}}"
+                                 alt="{{row["Answer"]}}" 
+                                 data-left="{{row["BoundingBox"]["left"]}}"
+                                 data-top="{{row["BoundingBox"]["top"]}}"
+                                 data-width="{{row["BoundingBox"]["width"]}}"
+                                 data-height="{{row["BoundingBox"]["height"]}}"
+                            />
+                        </div>   
+                    </td>
+                    <td>{{row["Answer"]}}</td>  
+                    <td>
+                        <input type="number" id="mark-{{row["RowNumber"]}}" min="0" value="1" max="1" step="1" 
+                               class="mark" 
+                               data-similarity="{{row["Similarity"]}}"
+                               data-confidence="{{row["Confidence"]}}"
+                               required /> 
+                        <span id="mark-{{row["RowNumber"]}}-locked" class="lock"></span>
+                    </td>
+                    <td>{{'%0.2f'| format(row["Similarity"]|float)}}</td>
+                    <td>{{'%0.2f'| format(row["Confidence"]|float)}}</td>
+                  </tr>      
+{% endfor %} 
+                </tbody>
+            </table>
+        </form>
+	</section>
+	<footer>
+		<p>Created by Higher Diploma in Cloud and Data Centre Administration Developement Team. </p>
+	</footer>
+</body>
+</html>
