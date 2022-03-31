@@ -29,6 +29,31 @@
                         $(this).val(mark);
                     }
                 });
+                saveMark();
+            };
+            
+            const saveMark = ()=>{
+                let marks = $('.mark').map(function(){
+                    let overridedMark = $("#"+ this.id + "-locked").html();
+                    console.log(overridedMark);
+                    return {id: this.id.replace('mark-',''), mark: overridedMark || $(this).val()};
+                }).get(); 
+                
+                $.ajax({                    
+                    data: JSON.stringify(marks),
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success: function(returnData){
+                        console.log("Mark saved in server!");
+                    },
+                    error: function(xhr, ajaxOptions, thrownError){
+                        console.error(xhr.status);
+                        console.error(thrownError);
+                        alert(thrownError);
+                    }
+                });                
+                return marks;
             };
             
             let table = $('#marksheet').DataTable({
@@ -62,9 +87,7 @@
                 refreshMark();
             });
             refreshMark();   
-            
-
-            
+         
             
             $('#dialog').dialog({ 
                 autoOpen: false, show: false,
@@ -93,6 +116,7 @@
             $('.mark').on('keyup input', e => {
                 let mark = e.target.value;
                 $("#" + e.target.id + "-locked").html(mark);
+                saveMark();
             });
         
             $('.lock').on('click', e => {
@@ -109,14 +133,12 @@
               document.body.removeChild(element);
             }
             
+
+            
             $('#saveButton').on('click',function(e){
                 e.preventDefault();
-                let marks = $('.mark').map(function(){
-                    let overridedMark = $("#"+ this.id + "-locked").html();
-                    console.log(overridedMark);
-                    return {id: this.id.replace('mark-',''), mark: overridedMark?overridedMark:$(this).val()};
-                }); 
-                console.log(marks);
+                let marks = saveMark();
+                console.log(marks);       
                 download('{{studentsScriptFileName}}-{{question}}.json',JSON.stringify(marks));
             });
             
@@ -184,8 +206,9 @@
             padding-right: 10px;
         }
         
-        input.mark {
+        input.mark, .lock {
             width: 50px;
+            font-size: xx-large;
         }
         
         .answerImage {
@@ -250,7 +273,7 @@
                 <input type="number" id="width" min="0" step="10" class="changeBoundBox">                                
             </div>
             <div class="form">
-                <input id="saveButton" type="submit" value="Save Mark Result">
+                <input id="saveButton" type="submit" value="Download Mark Result JSON">
             </div>
         </form>
         <div>
