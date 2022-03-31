@@ -231,19 +231,19 @@
             </div>
             <div class="form">
                 <label for="left">Left:</label>
-                <input type="number" id="left" min="0" step="10" class="changeBoundBox">                   
+                <input type="number" id="left" min="0" step="10" class="changeBoundBox" value="{{estimatedBoundingBox["left"]}}">                   
             </div>
             <div class="form">
                 <label for="top">Top:</label>
-                <input type="number" id="top" min="0" step="10" class="changeBoundBox">                                  
+                <input type="number" id="top" min="0" step="10" class="changeBoundBox" value="{{estimatedBoundingBox["top"]}}">                                  
             </div>
             <div class="form">
                 <label for="height">Height:</label>
-                <input type="number" id="height" min="0" step="10" class="changeBoundBox">                               
+                <input type="number" id="height" min="0" step="10" class="changeBoundBox" value="{{estimatedBoundingBox["height"]}}">                           
             </div>
                 <div class="form">
                 <label for="width">Width:</label>
-                <input type="number" id="width" min="0" step="10" class="changeBoundBox">                                
+                <input type="number" id="width" min="0" step="10" class="changeBoundBox" value="{{estimatedBoundingBox["width"]}}">                               
             </div>
             <div class="form">
                 <input id="saveButton" type="submit" value="Download Mark Result JSON">
