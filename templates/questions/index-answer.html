@@ -13,24 +13,6 @@
     
     <script>
         $(document).ready( function () {          
-            const refreshMark = ()=>{
-                let fullMark = $('#fullMark').val();
-                let minimumSimilarity = $('#minimumSimilarity').val();
-                let granularity = $('#granularity').val();
-                $('.mark')
-                    .attr("max",$('#fullMark').val())
-                    .attr("step",$('#granularity').val())
-                .each(function( index ) {
-                    let similarity = $(this).data("similarity");                 
-                    if(similarity >= minimumSimilarity) $(this).val(fullMark);
-                    else{
-                        let mark = fullMark * similarity;
-                        mark = Math.floor(mark / granularity) * granularity;
-                        $(this).val(mark);
-                    }
-                });
-                saveMark();
-            };
             
             const saveMark = ()=>{
                 let marks = $('.mark').map(function(){
@@ -78,7 +60,7 @@
             loadMark();
             
             let table = $('#marksheet').DataTable({
-                order: [[ 3, "desc" ]],
+                order: [[ 1, "desc" ]],
                 paging: false,
                 autoWidth: true,
                 columnDefs: [
@@ -93,22 +75,7 @@
                 // Toggle the visibility
                 column.visible( ! column.visible() );
             } );
-            
-            $('#minimumSimilarity').on('change',function(e){
-                $('#currentSimilarity').html(e.target.value);
-                refreshMark();
-            });
-            
-            $('#granularity').on('change',function(e){
-                $('#currentGranularity').html(e.target.value);
-                refreshMark();
-            });
-            
-            $('#fullMark').on('change',function(e){
-                refreshMark();
-            });
-            refreshMark();   
-         
+                     
             
             $('#dialog').dialog({ 
                 autoOpen: false, show: false,
@@ -118,7 +85,7 @@
             })
            
             $('.answerImage').on('click',function(e){
-                 e.preventDefault();
+                e.preventDefault();
                 console.log($(this).data());
                 let left = $(this).data('left');
                 let top = $(this).data('top');
@@ -227,7 +194,7 @@
         }
         
         input.mark, .lock {
-            width: 50px;
+            width: 500px;
             font-size: xx-large;
         }
         
@@ -249,7 +216,7 @@
 <body>
 	<header>
         <a href="../../index.html">Back to the question list</a>        
-        <h1>Grading form for {{studentsScriptFileName}} - {{question}} (Answer: {{standardAnswer if standardAnswer is not none}})</h1>
+        <h1>Grading form for {{studentsScriptFileName}} - {{question}}</h1>
 	</header>	
 	<section> 
         <div id="dialog" title="Large Image">
@@ -258,39 +225,25 @@
 
         <form action="" method="get" class="form">
             <div class="form">
-                <label for="fullMark">The full mark of this question (1-100):</label>
-                <input type="number" id="fullMark" min="1" max="100" value="1">
-            </div>
-            <div class="form">
-                <label for="minimumSimilarity">The minimum Similarity value of full mark:</label>
-                <input type="range" id="minimumSimilarity" name="minimumSimilarity" min="0.1" max="1" value="0.8" step="0.1">
-                (<span id="currentSimilarity">0.8</span>)
-            </div>
-            <div class="form">
-                <label for="granularity">The granularity of mark:</label>
-                <input type="range" id="granularity" min="0" max="1" value="1" step="0.25">  
-                (<span id="currentGranularity">1</span>)   
-            </div> 
-            <div class="form">
                 <label for="zoom">Image Zoom:</label>
                 <input type="range" id="zoom" min="0.1" max="2" value="1" step="0.1">  
                 (<span id="currentZoom">1</span>)   
             </div>
             <div class="form">
                 <label for="left">Left:</label>
-                <input type="number" id="left" min="0" step="10" class="changeBoundBox" value="{{standardAnswerBoundingBox["left"]}}">                   
+                <input type="number" id="left" min="0" step="10" class="changeBoundBox">                   
             </div>
             <div class="form">
                 <label for="top">Top:</label>
-                <input type="number" id="top" min="0" step="10" class="changeBoundBox" value="{{standardAnswerBoundingBox["top"]}}">                                  
+                <input type="number" id="top" min="0" step="10" class="changeBoundBox">                                  
             </div>
             <div class="form">
                 <label for="height">Height:</label>
-                <input type="number" id="height" min="0" step="10" class="changeBoundBox" value="{{standardAnswerBoundingBox["height"]}}">                           
+                <input type="number" id="height" min="0" step="10" class="changeBoundBox">                               
             </div>
                 <div class="form">
                 <label for="width">Width:</label>
-                <input type="number" id="width" min="0" step="10" class="changeBoundBox" value="{{standardAnswerBoundingBox["width"]}}">                               
+                <input type="number" id="width" min="0" step="10" class="changeBoundBox">                                
             </div>
             <div class="form">
                 <input id="saveButton" type="submit" value="Download Mark Result JSON">
@@ -300,8 +253,6 @@
             Show/Hide column:
             <a class="toggle-vis" data-column="0" href="#">Image</a> -
             <a class="toggle-vis" data-column="1" href="#">Answer</a> - 
-            <a class="toggle-vis" data-column="2" href="#">Mark</a> - 
-            <a class="toggle-vis" data-column="3" href="#">Similarity</a> - 
             <a class="toggle-vis" data-column="4" href="#">Confidence Score</a>        
         </div>
         <div>
@@ -312,9 +263,7 @@
                 <thead>
                   <tr>
                     <th>Image</th>
-                    <th>Answer</th>
-                    <th>Mark</th>                      
-                    <th>Similarity</th>
+                    <th>Answer</th> 
                     <th>Confidence Score</th>
                   </tr>
                 </thead>
@@ -334,16 +283,15 @@
                             />
                         </div>   
                     </td>
-                    <td>{{row["Answer"]}}</td>  
                     <td>
-                        <input type="number" id="mark-{{row["RowNumber"]}}" min="0" value="1" max="1" step="1" 
+                        <input type="text" id="mark-{{row["RowNumber"]}}"
                                class="mark" 
                                data-similarity="{{row["Similarity"]}}"
                                data-confidence="{{row["Confidence"]}}"
+                               value="{{row["Answer"]}}"
                                required /> 
                         <span id="mark-{{row["RowNumber"]}}-locked" class="lock"></span>
                     </td>
-                    <td>{{'%0.2f'| format(row["Similarity"]|float)}}</td>
                     <td>{{'%0.2f'| format(row["Confidence"]|float)}}</td>
                   </tr>      
 {% endfor %} 
