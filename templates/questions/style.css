@@ -1,0 +1,36 @@
+form.form {
+    display: table;
+}
+
+div.form {
+    display: table-row;
+}
+
+label, input {
+    display: table-cell;
+    margin-bottom: 10px;
+}
+
+label {
+    padding-right: 10px;
+}
+
+input.mark, .lock {
+    width: 50px;
+    font-size: xx-large;
+}
+
+div.imputation {
+    border-style: solid;
+    border-color: coral;
+}
+body {background-color: white;}
+        
+{% for index, row in dataTable.iterrows() -%}        
+.crop-{{row["RowNumber"]}} {{"{"}}      
+    object-fit: none; 
+    object-position: -{{row["BoundingBox"]["left"]}}px -{{row["BoundingBox"]["top"]}}px;
+    width: {{row["BoundingBox"]["width"]}}px;
+    height: {{row["BoundingBox"]["height"]}}px;           
+{{"}"}}
+{% endfor %}       

@@ -80,8 +80,14 @@ const loadControlForm = () =>{
         success: function(returnData){
             console.log("loaded control form");   
             for (let i in returnData) {                            
-                $('#'+i).val(returnData[i]);
-            }                       
+                $('#'+i).val(returnData[i]);        
+            }
+            if(returnData.fullMark && returnData.granularity)
+            {
+                $('.mark')
+                    .attr("max",returnData.fullMark)
+                    .attr("step",returnData.granularity);
+            }
         },
         error: function(xhr, ajaxOptions, thrownError){
             console.log("Cannot reload Mark");                             
@@ -90,9 +96,9 @@ const loadControlForm = () =>{
 };
 
 $(document).ready(() => {     
-    loadMark();
-    saveMark();
     loadControlForm();     
+    loadMark();
+    saveMark();   
     
     $('a.toggle-vis').on( 'click', function (e) {
         e.preventDefault();
