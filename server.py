@@ -49,6 +49,7 @@ class Server(BaseHTTPRequestHandler):
 
         data = json.loads(post_data.decode("utf-8"))
         print(data)
+        print()
         prefix = ""
         if data["type"] == "mark":
             prefix = "mark"
