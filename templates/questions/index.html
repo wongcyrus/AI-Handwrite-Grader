@@ -10,8 +10,9 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha512-uto9mlQzrs59VwILcLiRYeLKPPbS/bT71da/OEBYEwcdNUk8jYIy+D176RYoop1Da+f9mvkYrmj5MCLZWEtQuA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css" integrity="sha512-aOG0c6nPNzGk+5zjwyJaoRUgCdOrfSDhmMID2u4+OIslr0GjpLKo7Xm0Ao3xmpM4T8AmIouRkqwj1nrdVsLKEQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <script src="question.js"></script>
     <script src="../../javascript/common.js"></script>
-    <script src="question.js"></script>    
     <link rel="stylesheet" href="style.css" />
     
     <script>
@@ -62,54 +63,7 @@
             
             $('#fullMark').on('change',function(e){
                 refreshMark();
-            });
-            refreshMark(); 
-            
-            const zoomImage = ()=>{                
-                const zoom = $('#zoom').val();
-                const commonLeft = $('#left').val();
-                const commonTop = $('#top').val();
-                const commonWidth = $('#width').val();
-                const commonHeight = $('#height').val();
-                
-                console.log(commonLeft,commonTop,commonWidth,commonHeight);
-                
-                let left, top, width, height, imageWidth, imageHeight;
-{% for index, row in dataTable.iterrows() -%}     
-                
-                left = (commonLeft || {{row["BoundingBox"]["left"]}}) * zoom;
-                top = (commonTop || {{row["BoundingBox"]["top"]}}) * zoom;
-                width = (commonWidth || {{row["BoundingBox"]["width"]}}) * zoom;
-                height = (commonHeight || {{row["BoundingBox"]["height"]}}) * zoom;
-        
-                // imageWidth = $('#crop-{{row["RowNumber"]}}').prop('width') * zoom;
-                // imageHeight = $('#crop-{{row["RowNumber"]}}').prop('height') * zoom
-                // if(imageWidth !== 0 && imageHeight !== 0){
-                //     $('#crop-{{row["RowNumber"]}}').width(imageWidth);
-                //     $('#crop-{{row["RowNumber"]}}').height(imageHeight);
-                // }
-                $('#crop-{{row["RowNumber"]}}')
-                    .css('object-fit','none')
-                    .css('width', width + "px")
-                    .css('height', height + "px")
-                    .css('object-position', "-"+ left + "px -"+ top +"px")
-                    .css('transform-origin', "left top")
-                    .css('transform', `scale(${zoom})`);
-        
-{% endfor %}   
-                
-            };
-                
-            $('#zoom').on('change',function(e){
-                $('#currentZoom').html(e.target.value);
-                zoomImage();
-            });
-        
-            $('.changeBoundBox').on('change',function(e){             
-                zoomImage();                
-            });
-        
-            zoomImage();
+            });      
         } );
     </script>
 </head>

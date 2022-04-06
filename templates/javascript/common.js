@@ -24,22 +24,24 @@ const saveMark = ()=>{
 };
 
 
-const loadMark = ()=>{               
+const loadMark = (callback)=>{               
     $.ajax({
         url: $(location).attr('href').replace('index.html',"mark.json"),                   
         type: "GET",
         dataType: "json",
         contentType: "application/json;charset=utf-8",
-        success: function(returnData){
-            console.log("loaded Mark");   
+        success: function(returnData){            
             returnData.forEach(element => {
                 $("#mark-"+ element.id).val(element.mark);
                 if(element.overridedMark)
                     $("#mark-"+ element.id + "-locked").html(element.overridedMark);
-            });                        
+            });
+            console.log("loaded Mark");   
+            if(callback) callback();
         },
         error: function(xhr, ajaxOptions, thrownError){
-            console.log("Cannot reload Mark");                             
+            console.log("Cannot reload Mark"); 
+            if(callback) callback();
         }
     });
 };
@@ -71,7 +73,7 @@ const saveControlForm = () => {
     }); 
 };
 
-const loadControlForm = () =>{
+const loadControlForm = (callback) =>{
     $.ajax({
         url: $(location).attr('href').replace('index.html',"control.json"),                   
         type: "GET",
@@ -88,17 +90,44 @@ const loadControlForm = () =>{
                     .attr("max",returnData.fullMark)
                     .attr("step",returnData.granularity);
             }
+            if(callback) callback();
         },
         error: function(xhr, ajaxOptions, thrownError){
-            console.log("Cannot reload Mark");                             
+            console.log("Cannot reload control form");
+            if(callback) callback();
         }
     });
 };
 
+const zoomImage = (callback)=>{                
+    const zoom = $('#zoom').val();
+    const commonLeft = $('#left').val();
+    const commonTop = $('#top').val();
+    const commonWidth = $('#width').val();
+    const commonHeight = $('#height').val();
+
+    console.log("zoomImage",commonLeft,commonTop,commonWidth,commonHeight);
+
+    let left, top, width, height, imageWidth, imageHeight;
+
+    for(let b of boundingBoxes){
+        left = commonLeft || b.left * zoom;
+        top = commonTop || b.top * zoom;
+        width = commonWidth || b.width * zoom;
+        height = commonHeight || b.height * zoom;
+        $('#crop-'+ b.id)
+            .css('object-fit','none')
+            .css('width', width + "px")
+            .css('height', height + "px")
+            .css('object-position', "-"+ left + "px -"+ top +"px")
+            .css('transform-origin', "left top")
+            .css('transform', `scale(${zoom})`);
+    }
+    if(callback) callback();
+};
+
 $(document).ready(() => {     
-    loadControlForm();     
-    loadMark();
-    saveMark();   
+    loadControlForm(()=>loadMark(()=>zoomImage(()=>saveMark())));  
     
     $('a.toggle-vis').on( 'click', function (e) {
         e.preventDefault();
@@ -147,5 +176,14 @@ $(document).ready(() => {
         console.log('Form changed!');
         saveControlForm();
     });
+    
+    $('#zoom').on('change',function(e){
+        $('#currentZoom').html(e.target.value);
+        zoomImage();
+    });
+
+    $('.changeBoundBox').on('change',function(e){             
+        zoomImage();                
+    });      
 
 } );
