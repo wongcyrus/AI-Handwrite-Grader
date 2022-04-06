@@ -13,9 +13,16 @@
 	<header>
         <h1>Grading form for {{studentsScriptFileName}}</h1>
 	</header>	
-	<section>	
+	<section>
+        <h2>Questions with text answer</h2>
         <ul>
-        {% for page in pages -%}
+        {% for page in textAnswer -%}
+            <li><a href="questions/{{ page }}/index.html" >{{ page }}<a/></li>    
+        {% endfor %}
+        </ul>
+        <h2>Questions with options answer</h2>
+        <ul>
+        {% for page in optionAnswer -%}
             <li><a href="questions/{{ page }}/index.html" >{{ page }}<a/></li>    
         {% endfor %}
         </ul>

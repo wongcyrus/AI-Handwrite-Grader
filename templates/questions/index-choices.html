@@ -1,0 +1,350 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>Grading form for {{studentsScriptFileName}} - {{question}}</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link href='https://classic.yarnpkg.com/en/package/normalize.css' rel='stylesheet' type='text/css'>     
+    <link href='https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css' rel='stylesheet' type='text/css'>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha512-uto9mlQzrs59VwILcLiRYeLKPPbS/bT71da/OEBYEwcdNUk8jYIy+D176RYoop1Da+f9mvkYrmj5MCLZWEtQuA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css" integrity="sha512-aOG0c6nPNzGk+5zjwyJaoRUgCdOrfSDhmMID2u4+OIslr0GjpLKo7Xm0Ao3xmpM4T8AmIouRkqwj1nrdVsLKEQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <script>
+        $(document).ready( function () {
+            const dotProduct = (a, b) => a.map((x, i) => a[i] * b[i]).reduce((m, n) => m + n);
+            const refreshMark = ()=>{
+                let correctMark = $('#correctMark').val();
+                let incorrectMark = $('#incorrectMark').val();
+                
+                let answersMask = {{answersMask}};
+                answersMask = answersMask.map(item => { return item === 1? correctMark : incorrectMark; });   
+                $('#answersMask').val(answersMask.join(","));
+            
+                let maxMark = answersMask.reduce((partialSum, a) => partialSum + Math.max(a,0), 0);
+                let minMark = answersMask.reduce((partialSum, a) => partialSum + Math.min(a,0), 0);
+                console.log(maxMark,minMark);
+                $('.mark')
+                    .attr("max",maxMark)
+                    .attr("min",minMark)
+                .each(function( index ) {
+                    let answer = $(this).data("answer").split(',');                 
+                    let mark = dotProduct(answersMask,answer);
+                    $(this).val(mark);
+                    
+                });
+                saveMark();
+            };
+            
+            const saveMark = ()=>{
+                let marks = $('.mark').map(function(){
+                    let overridedMark = $("#"+ this.id + "-locked").html();
+                    console.log(overridedMark);
+                    return {id: this.id.replace('mark-',''), mark: $(this).val(), overridedMark: overridedMark};
+                }).get(); 
+                
+                $.ajax({                    
+                    data: JSON.stringify(marks),
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success: function(returnData){
+                        console.log("Mark saved in server!");
+                    },
+                    error: function(xhr, ajaxOptions, thrownError){
+                        console.error(xhr.status);
+                        console.error(thrownError);
+                        alert(thrownError);
+                    }
+                });                
+                return marks;
+            };
+            
+            const loadMark = ()=>{               
+                $.ajax({
+                    url: $(location).attr('href').replace('index.html',"mark.json"),                   
+                    type: "GET",
+                    dataType: "json",
+                    contentType: "application/json;charset=utf-8",
+                    success: function(returnData){
+                        console.log("loaded Mark");   
+                        returnData.forEach(element => {
+                            $("#mark-"+ element.id).val(element.mark);
+                            if(element.overridedMark)
+                                $("#mark-"+ element.id + "-locked").html(element.overridedMark);
+                        });                        
+                    },
+                    error: function(xhr, ajaxOptions, thrownError){
+                        console.log("Cannot reload Mark");                             
+                    }
+                });
+            };
+            loadMark();
+            
+            let table = $('#marksheet').DataTable({
+                order: [[ 3, "desc" ]],
+                paging: false,
+                autoWidth: true,
+                columnDefs: [
+                    { width: '50%', targets: 0 }
+                ],
+            } );
+            
+            $('a.toggle-vis').on( 'click', function (e) {
+                e.preventDefault();
+                // Get the column API object
+                let column = table.column( $(this).attr('data-column') );
+                // Toggle the visibility
+                column.visible( ! column.visible() );
+            } );
+                        
+            $('#correctMark, #incorrectMark').on('change',function(e){                     
+                refreshMark();
+            });
+            refreshMark();   
+         
+            
+            $('#dialog').dialog({ 
+                autoOpen: false, show: false,
+                maxHeight: $(window).height() - 100, 
+                minWidth: $(window).width() - 100 ,
+                resizable: true
+            })
+           
+            $('.answerImage').on('click',function(e){
+                 e.preventDefault();
+                console.log($(this).data());
+                let left = $(this).data('left');
+                let top = $(this).data('top');
+                let width = $(this).data('width');
+                let height = $(this).data('height');
+                
+                $('#left').val(left);
+                $('#top').val(top);
+                $('#width').val(width);
+                $('#height').val(height);
+                
+                $('#dialog').dialog('open');
+                $('#largeImage').attr('src', $(this).attr('src'));              
+            });
+            
+            $('.mark').on('keyup input', e => {
+                let mark = e.target.value;
+                $("#" + e.target.id + "-locked").html(mark);
+                saveMark();
+            });
+        
+            $('.lock').on('click', e => {
+                $("#" + e.target.id).html("");
+            });
+            
+            const download = (filename, text) => {
+              var element = document.createElement('a');
+              element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+              element.setAttribute('download', filename);
+              element.style.display = 'none';
+              document.body.appendChild(element);
+              element.click();
+              document.body.removeChild(element);
+            }
+            
+            
+            $('#saveButton').on('click',function(e){
+                e.preventDefault();
+                let marks = saveMark();
+                console.log(marks);       
+                download('{{studentsScriptFileName}}-{{question}}.json',JSON.stringify(marks));
+            });
+            
+            const zoomImage = ()=>{
+                const zoom = $('#zoom').val();
+                let commonLeft = $('#left').val();
+                let commonTop = $('#top').val();
+                let commonWidth = $('#width').val();
+                let commonHeight = $('#height').val();
+                
+                console.log(commonLeft,commonTop,commonWidth,commonHeight);
+                
+                let left, top, width, height, imageWidth, imageHeight;
+{% for index, row in dataTable.iterrows() -%}     
+                
+                left = (commonLeft || {{row["BoundingBox"]["left"]}}) * zoom;
+                top = (commonTop || {{row["BoundingBox"]["top"]}}) * zoom;
+                width = (commonWidth || {{row["BoundingBox"]["width"]}}) * zoom;
+                height = (commonHeight || {{row["BoundingBox"]["height"]}}) * zoom;
+        
+                // imageWidth = $('#crop-{{row["RowNumber"]}}').prop('width') * zoom;
+                // imageHeight = $('#crop-{{row["RowNumber"]}}').prop('height') * zoom
+                // if(imageWidth !== 0 && imageHeight !== 0){
+                //     $('#crop-{{row["RowNumber"]}}').width(imageWidth);
+                //     $('#crop-{{row["RowNumber"]}}').height(imageHeight);
+                // }
+                $('#crop-{{row["RowNumber"]}}')
+                    .css('object-fit','none')
+                    .css('width', width + "px")
+                    .css('height', height + "px")
+                    .css('object-position', "-"+ left + "px -"+ top +"px")
+                    .css('transform-origin', "left top")
+                    .css('transform', `scale(${zoom})`);
+        
+{% endfor %}   
+                
+            };
+            $('#zoom').on('change',function(e){
+                $('#currentZoom').html(e.target.value);
+                zoomImage();
+            });
+        
+            $('.changeBoundBox').on('change',function(e){             
+                zoomImage();
+            });
+        
+            zoomImage();
+        } );
+    </script>
+    <style>
+        form.form {
+            display: table;
+        }
+
+        div.form {
+            display: table-row;
+        }
+
+        label, input {
+            display: table-cell;
+            margin-bottom: 10px;
+        }
+
+        label {
+            padding-right: 10px;
+        }
+        
+        input.mark, .lock {
+            width: 50px;
+            font-size: xx-large;
+        }
+        
+        div.imputation {
+            border-style: solid;
+            border-color: coral;
+        }
+        body {background-color: white;}
+        
+ {% for index, row in dataTable.iterrows() -%}        
+        .crop-{{row["RowNumber"]}} {{"{"}}      
+            object-fit: none; 
+            object-position: -{{row["BoundingBox"]["left"]}}px -{{row["BoundingBox"]["top"]}}px;
+            width: {{row["BoundingBox"]["width"]}}px;
+            height: {{row["BoundingBox"]["height"]}}px;           
+        {{"}"}}
+{% endfor %}       
+    </style>
+</head>
+<body>
+	<header>
+        <a href="../../index.html">Back to the question list</a>        
+        <h1>Grading form for {{studentsScriptFileName}} - {{question}} (Answer: {{standardAnswer if standardAnswer is not none}})</h1>
+       
+	</header>	
+	<section> 
+        <div id="dialog" title="Large Image">
+            <img id="largeImage" src="" style="vertical-align: top; padding: 0px 10px 10px 2px; width: 100%, height: 100%" />
+        </div>
+
+        <form action="" method="get" class="form">
+            <div class="form">
+                <label for="correctMark">The mark for each correct answer (1 to 10):</label>
+                <input type="number" id="correctMark" min="1" max="10" value="1">
+            </div>
+            <div class="form">
+                <label for="incorrectMark">The mark for each incorrect answer (-10 to 0):</label>
+                <input type="number" id="incorrectMark" min="-10" max="0" value="0">
+            </div>
+            <div class="form">
+                <label for="answersMask">Answer Mask:</label>
+                <input type="text" id="answersMask" value="{{answersMask|join(',')}}" readonly>
+            </div>
+            <div class="form">
+                <label for="zoom">Image Zoom:</label>
+                <input type="range" id="zoom" min="0.1" max="2" value="1" step="0.1">  
+                (<span id="currentZoom">1</span>)   
+            </div>
+            <div class="form">
+                <label for="left">Left:</label>
+                <input type="number" id="left" min="0" step="10" class="changeBoundBox" value="{{estimatedBoundingBox["left"]}}">                   
+            </div>
+            <div class="form">
+                <label for="top">Top:</label>
+                <input type="number" id="top" min="0" step="10" class="changeBoundBox" value="{{estimatedBoundingBox["top"]}}">                                  
+            </div>
+            <div class="form">
+                <label for="height">Height:</label>
+                <input type="number" id="height" min="0" step="10" class="changeBoundBox" value="{{estimatedBoundingBox["height"]}}">                           
+            </div>
+                <div class="form">
+                <label for="width">Width:</label>
+                <input type="number" id="width" min="0" step="10" class="changeBoundBox" value="{{estimatedBoundingBox["width"]}}">                               
+            </div>
+            <div class="form">
+                <input id="saveButton" type="submit" value="Download Mark Result JSON">
+            </div>
+        </form>
+        <div>
+            Show/Hide column:
+            <a class="toggle-vis" data-column="0" href="#">Image</a> -
+            <a class="toggle-vis" data-column="1" href="#">Answer</a> - 
+            <a class="toggle-vis" data-column="2" href="#">Mark</a> - 
+            <a class="toggle-vis" data-column="3" href="#">Confidence Score</a>        
+        </div>
+        <div>
+            <p>If your type in the mark, it will be locked. To unlock, click on the mark below the mark input.</p>
+        </div>
+        <form id="markForm" action="" method="get" class="form">
+            <table id="marksheet" class="display" style="width:100%">
+                <thead>
+                  <tr>
+                    <th>Image</th>
+                    <th>Answer</th>
+                    <th>Mark</th>                      
+                    <th>Confidence Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+{% for index, row in dataTable.iterrows() -%}
+                  <tr>          
+                    <td> 
+                        <div id="crop-{{row["RowNumber"]}}-container" {% if row["Confidence"]|float == 0.0 %} class="imputation" {% endif %}>
+                            <img src="../../{{row["Image"]}}" 
+                                 id="crop-{{row["RowNumber"]}}" 
+                                 class="answerImage crop-{{row["RowNumber"]}}"
+                                 alt="{{row["Answer"]}}" 
+                                 data-left="{{row["BoundingBox"]["left"]}}"
+                                 data-top="{{row["BoundingBox"]["top"]}}"
+                                 data-width="{{row["BoundingBox"]["width"]}}"
+                                 data-height="{{row["BoundingBox"]["height"]}}"
+                            />
+                        </div>   
+                    </td>
+                    <td>{{row["Answer"]}}</td>  
+                    <td>
+                        <input type="number" id="mark-{{row["RowNumber"]}}" min="0" value="1" max="1" step="1" 
+                               class="mark" 
+                               data-answer="{{row["Answer"]}}"
+                               data-confidence="{{row["Confidence"]}}"
+                               required /> 
+                        <span id="mark-{{row["RowNumber"]}}-locked" class="lock"></span>
+                    </td>
+                    <td>{{'%0.2f'| format(row["Confidence"]|float)}}</td>
+                  </tr>      
+{% endfor %} 
+                </tbody>
+            </table>
+        </form>
+	</section>
+	<footer>
+		<p>Created by Higher Diploma in Cloud and Data Centre Administration Developement Team. </p>
+	</footer>
+</body>
+</html>
