@@ -101,12 +101,14 @@ const loadControlForm = (callback) =>{
 
 const zoomImage = (callback)=>{                
     const zoom = $('#zoom').val();
-    const commonLeft = $('#left').val();
-    const commonTop = $('#top').val();
-    const commonWidth = $('#width').val();
-    const commonHeight = $('#height').val();
+    
+    const boundingBoxMode = $('input[name="boundingBoxMode"]:checked').val();
+    const commonLeft = boundingBoxMode === 'manual'? $('#left').val() : boundingBoxMode === 'tractractTrimedMean'? textractTrimedMeanBoundingBoxes.left: undefined;
+    const commonTop = boundingBoxMode === 'manual'? $('#top').val() : boundingBoxMode === 'tractractTrimedMean'? textractTrimedMeanBoundingBoxes.top: undefined;
+    const commonWidth = boundingBoxMode === 'manual'? $('#width').val() : boundingBoxMode === 'tractractTrimedMean'? textractTrimedMeanBoundingBoxes.width: undefined;
+    const commonHeight = boundingBoxMode === 'manual'? $('#height').val() : boundingBoxMode === 'tractractTrimedMean'? textractTrimedMeanBoundingBoxes.height: undefined;
 
-    console.log("zoomImage",commonLeft,commonTop,commonWidth,commonHeight);
+    console.log("zoomImage", boundingBoxMode, commonLeft,commonTop,commonWidth,commonHeight);
 
     let left, top, width, height, imageWidth, imageHeight;
 
@@ -123,6 +125,8 @@ const zoomImage = (callback)=>{
             .css('transform-origin', "left top")
             .css('transform', `scale(${zoom})`);
     }
+    
+    $('.changeBoundBox').prop('disabled', boundingBoxMode !== "manual");
     if(callback) callback();
 };
 
@@ -172,17 +176,21 @@ $(document).ready(() => {
         $("#" + e.target.id).html("");
     });
     
-    $('#controlForm').on('keyup change paste', 'input, select, textarea', function(){
-        console.log('Form changed!');
+    $('#controlForm').on('keyup change paste', 'input, select, textarea', e => {
+        console.log('Form changed:' + e.target.id +","+ e.target.name);
         saveControlForm();
+        
+        if("boundingBoxMode" ===  e.target.name){           
+            zoomImage();             
+        }
     });
     
-    $('#zoom').on('change',function(e){
+    $('#zoom').on('change', e => {
         $('#currentZoom').html(e.target.value);
         zoomImage();
     });
 
-    $('.changeBoundBox').on('change',function(e){             
+    $('.changeBoundBox').on('change', e =>{             
         zoomImage();                
     });      
 

@@ -9,3 +9,10 @@ const boundingBoxes = [
 },        
 {% endfor %}
 ];
+ 
+const textractTrimedMeanBoundingBoxes ={   
+    'left':{{estimatedBoundingBox["left"]}},
+    'top': {{estimatedBoundingBox["top"]}},
+    'width': {{estimatedBoundingBox["width"]}},
+    'height': {{estimatedBoundingBox["height"]}}
+};
