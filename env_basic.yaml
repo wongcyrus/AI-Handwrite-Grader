@@ -1,0 +1,20 @@
+name: basic
+dependencies:
+  - python=3.9
+  - glib
+  - pip
+  - pip:
+    - ipykernel
+    - ipywidgets
+    - ipython_genutils
+    - numpy 
+    - pandas 
+    - openpyxl 
+    - seaborn
+    - matplotlib 
+    - scipy
+    - Jinja2
+    - shapely
+    - sentence-transformers
+    - opencv-python==4.5.4.60
+    - easyocr
