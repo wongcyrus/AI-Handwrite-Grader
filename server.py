@@ -47,7 +47,11 @@ class Server(BaseHTTPRequestHandler):
         question = result.group(1)
         this_dir = Path(__file__).resolve().parent
 
-        data = json.loads(post_data.decode("utf-8"))
+        json_str = post_data.decode("utf-8")
+        data = json.loads(json_str)
+        print("New data")
+        print(json_str)
+        print()
         print(data)
         print()
         prefix = ""
@@ -60,6 +64,8 @@ class Server(BaseHTTPRequestHandler):
         )
         
         json_str = json.dumps(data['data'])
+        print(json_str)
+        print()
         f = open(filepath, "w")
         f.write(json_str)
         f.close()

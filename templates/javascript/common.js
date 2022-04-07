@@ -126,7 +126,6 @@ const zoomImage = (callback)=>{
             .css('transform', `scale(${zoom})`);
     }
     
-    $('.changeBoundBox').prop('disabled', boundingBoxMode !== "manual");
     if(callback) callback();
 };
 
@@ -176,7 +175,7 @@ $(document).ready(() => {
         $("#" + e.target.id).html("");
     });
     
-    $('#controlForm').on('keyup change paste', 'input, select, textarea', e => {
+    $('#controlForm').on('keyup change paste', 'input, select, textarea, radio', e => {
         console.log('Form changed:' + e.target.id +","+ e.target.name);
         saveControlForm();
         
