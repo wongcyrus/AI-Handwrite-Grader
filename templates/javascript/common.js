@@ -90,6 +90,12 @@ const loadControlForm = (callback) =>{
                     .attr("max",returnData.fullMark)
                     .attr("step",returnData.granularity);
             }
+            if(returnData.boundingBoxMode){
+                $("#"+ returnData.boundingBoxMode).attr("checked", "checked");    
+            }
+            if(returnData.regenerate == "on"){
+                $("#regenerate").attr("checked", "checked");    
+            }
             if(callback) callback();
         },
         error: function(xhr, ajaxOptions, thrownError){

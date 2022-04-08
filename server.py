@@ -62,8 +62,8 @@ class Server(BaseHTTPRequestHandler):
         filepath = (
             this_dir / "output/grading_form/questions/" / question / (prefix + ".json")
         )
-        
-        json_str = json.dumps(data['data'])
+
+        json_str = json.dumps(data["data"])
         print(json_str)
         print()
         f = open(filepath, "w")
