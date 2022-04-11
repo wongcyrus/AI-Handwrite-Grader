@@ -2,6 +2,7 @@ name: basic
 dependencies:
   - python=3.9
   - glib
+  - nodejs
   - pip
   - pip:
     - ipykernel
@@ -19,4 +20,4 @@ dependencies:
     - opencv-python==4.5.4.60
     - easyocr
     - boto
-    - munch
+    - jupyter_bbox_widget
