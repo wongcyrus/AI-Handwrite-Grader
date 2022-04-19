@@ -136,3 +136,4 @@ images/*
 output.zip
 temp.png
 AWSAcademyLeanerLab.config
+smtp.config

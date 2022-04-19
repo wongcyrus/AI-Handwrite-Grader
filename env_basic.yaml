@@ -19,5 +19,5 @@ dependencies:
     - sentence-transformers
     - opencv-python==4.5.4.60
     - easyocr
-    - boto
+    - boto3
     - jupyter_bbox_widget
