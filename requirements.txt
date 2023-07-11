@@ -1,0 +1,14 @@
+ipykernel
+ipywidgets
+ipython_genutils
+numpy 
+pandas 
+openpyxl 
+seaborn
+matplotlib 
+scipy
+Jinja2
+shapely
+boto3
+jupyter_bbox_widget
+PyPDF4

@@ -3,14 +3,19 @@
   "features": {
     "ghcr.io/devcontainers/features/python:1": {}
   },
+  "waitFor": "onCreateCommand",
+  "updateContentCommand": "python3 -m pip install -r requirements.txt",
+  "postCreateCommand": "",
   "customizations": {
-    // Configure properties specific to VS Code.
-    "vscode": {
-      // Add the IDs of extensions you want installed when the container is created.
-      "extensions": [
-        "editorconfig.editorconfig",
-        "github.copilot"
-      ]
-    }
+    "codespaces": {
+      "openFiles": []
+    },
+    // Add the IDs of extensions you want installed when the container is created.
+    "extensions": [
+      "editorconfig.editorconfig",
+      "github.copilot",
+      "ms-toolsai.jupyter",
+      "ms-python.python"
+    ]
   }
 }
