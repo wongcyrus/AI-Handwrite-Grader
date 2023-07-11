@@ -1,4 +1,3 @@
-ipykernel
 ipywidgets
 ipython_genutils
 numpy 
