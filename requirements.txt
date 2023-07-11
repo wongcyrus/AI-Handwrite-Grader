@@ -11,3 +11,4 @@ shapely
 boto3
 jupyter_bbox_widget
 PyPDF4
+pdf2image

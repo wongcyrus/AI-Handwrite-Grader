@@ -16,6 +16,9 @@
         "ms-python.python",
         "github.copilot"
       ]
+    },
+    "settings": {
+      "python.defaultInterpreterPath": "/home/codespace/.python/current/bin/python3"
     }
   }
 }
