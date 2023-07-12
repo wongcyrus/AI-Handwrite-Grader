@@ -6,12 +6,20 @@ Usage::
 """
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
-import html
 import json
 import mimetypes
 import re
 import time
-from pathlib import Path
+import os
+
+PDF_FILE = "../data/TestScript.pdf"
+file_name = os.path.basename(PDF_FILE)
+file_name = os.path.splitext(file_name)[0]
+base_path = "./marking_form/" + file_name
+base_path_images = base_path + "/images/"
+base_path_annotations = base_path + "/annotations/"
+base_path_questions = base_path + "/grading_form/questions"
+base_path_javascript = base_path + "/grading_form/javascript"
 
 
 class Server(BaseHTTPRequestHandler):
@@ -23,11 +31,10 @@ class Server(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
 
-        this_dir = Path(__file__).resolve().parent
         if self.path == "/":
-            filepath = this_dir / "output/grading_form" / "index.html"
+            filepath = base_path + "/index.html"
         else:
-            filepath = this_dir / "output/grading_form" / self.path[1:]
+            filepath = base_path + "/" + self.path[1:]
         mimetype, _ = mimetypes.guess_type(str(filepath))
         self.send_header("Content-type", mimetype)
         self.end_headers()
@@ -45,7 +52,6 @@ class Server(BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length)  # <--- Gets the data itself
         result = re.search("\/questions\/(.*)\/index.html", self.path)
         question = result.group(1)
-        this_dir = Path(__file__).resolve().parent
 
         json_str = post_data.decode("utf-8")
         data = json.loads(json_str)
@@ -59,9 +65,7 @@ class Server(BaseHTTPRequestHandler):
             prefix = "mark"
         elif data["type"] == "control":
             prefix = "control"
-        filepath = (
-            this_dir / "output/grading_form/questions/" / question / (prefix + ".json")
-        )
+        filepath = base_path_questions + "/" + question + "/" + prefix + ".json"
 
         json_str = json.dumps(data["data"])
         print(json_str)
@@ -72,11 +76,16 @@ class Server(BaseHTTPRequestHandler):
 
         timestr = time.strftime("%Y%m%d-%H%M%S")
         filepath = (
-            this_dir
-            / "output/grading_form/questions/"
-            / question
-            / (prefix + "-" + timestr + ".json")
+            base_path_questions
+            + "/"
+            + question
+            + "/"
+            + prefix
+            + "-"
+            + timestr
+            + ".json"
         )
+
         f = open(filepath, "w")
         f.write(json_str)
         f.close()
@@ -91,7 +100,9 @@ class Server(BaseHTTPRequestHandler):
 
 
 def run(server_class=HTTPServer, handler_class=Server, port=8080):
-    logging.basicConfig(filename="output/server.log", filemode="w", level=logging.DEBUG)
+    logging.basicConfig(
+        filename=base_path + "/server.log", filemode="w", level=logging.DEBUG
+    )
     server_address = ("", port)
     httpd = server_class(server_address, handler_class)
     logging.info("Starting httpd...\n")
