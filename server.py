@@ -18,8 +18,8 @@ file_name = os.path.splitext(file_name)[0]
 base_path = "./marking_form/" + file_name
 base_path_images = base_path + "/images/"
 base_path_annotations = base_path + "/annotations/"
-base_path_questions = base_path + "/grading_form/questions"
-base_path_javascript = base_path + "/grading_form/javascript"
+base_path_questions = base_path + "/questions"
+base_path_javascript = base_path + "/javascript"
 
 
 class Server(BaseHTTPRequestHandler):
