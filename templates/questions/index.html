@@ -104,18 +104,6 @@
                 (<span id="currentZoom">1</span>)   
             </div>
             <div class="form">
-                <label for="boundingBoxMode">Bounding box mode:</label>        
-                <label class="radio-inline">
-                  <input type="radio" name="boundingBoxMode" id="tractract" value="tractract" checked /> Amazon Textract
-                </label>
-                <label class="radio-inline">
-                  <input type="radio" name="boundingBoxMode" id="tractractTrimedMean" value="tractractTrimedMean" />Amazon Textract (Trimed Mean)
-                </label>
-                <label class="radio-inline">
-                  <input type="radio" name="boundingBoxMode" id="manual" value="manual" />Manual
-                </label>
-            </div>
-            <div class="form">
                 <label for="left">Left:</label>
                 <input type="number" id="left" name="left" min="0" step="10" class="changeBoundBox" value="{{estimatedBoundingBox["left"]}}" />                   
             </div>
@@ -158,10 +146,10 @@
 {% for index, row in dataTable.iterrows() -%}
                   <tr>          
                     <td> 
-                        <div id="crop-{{row["RowNumber"]}}-container" {% if row["Confidence"]|float == 0.0 %} class="imputation" {% endif %}>
+                        <div id="crop-{{row["page"]}}-container" {% if row["Confidence"]|float == 0.0 %} class="imputation" {% endif %}>
                             <img src="../../{{row["Image"]}}" 
-                                 id="crop-{{row["RowNumber"]}}" 
-                                 class="answerImage crop-{{row["RowNumber"]}}"
+                                 id="crop-{{row["page"]}}" 
+                                 class="answerImage crop-{{row["page"]}}"
                                  alt="{{row["Answer"]}}" 
                                  data-left="{{row["left"]}}"
                                  data-top="{{row["top"]}}"
@@ -172,12 +160,12 @@
                     </td>
                     <td>{{row["Answer"]}}</td>  
                     <td>
-                        <input type="number" id="mark-{{row["RowNumber"]}}" min="0" value="1" max="1" step="1" 
+                        <input type="number" id="mark-{{row["page"]}}" min="0" value="" max="1" step="1" 
                                class="mark" 
                                data-similarity="{{[row["Similarity"],0]|max}}"
                                data-confidence="{{row["Confidence"]}}"
                                required /> 
-                        <span id="mark-{{row["RowNumber"]}}-locked" class="lock"></span>
+                        <span id="mark-{{row["page"]}}-locked" class="lock"></span>
                     </td>
                     <td>{{'%0.2f'| format([row["Similarity"],0]|max|float)}}</td>
                     <td>{{'%0.2f'| format(row["Confidence"]|float)}}</td>

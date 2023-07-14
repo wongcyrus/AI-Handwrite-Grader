@@ -1,7 +1,7 @@
 const boundingBoxes = [
 {% for index, row in dataTable.iterrows() -%}     
 {
-    'id': {{row["RowNumber"]}},
+    'id': {{row["page"]}},
     'left':{{row["left"]}},
     'top': {{row["top"]}},
     'width': {{row["width"]}},
@@ -10,7 +10,7 @@ const boundingBoxes = [
 {% endfor %}
 ];
  
-const textractTrimedMeanBoundingBoxes ={   
+const estimatedBoundingBoxs ={   
     'left':{{estimatedBoundingBox["left"]}},
     'top': {{estimatedBoundingBox["top"]}},
     'width': {{estimatedBoundingBox["width"]}},
