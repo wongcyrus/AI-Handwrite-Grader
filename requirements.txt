@@ -14,3 +14,4 @@ pdf2image
 easyocr
 opencv-python
 sentence-transformers
+termcolor

@@ -3,6 +3,7 @@
 <head>
 {% include 'questions/header.html' %}    
     <script>
+        let table;
         $(document).ready( function () {          
             const refreshMark = ()=>{
                 let fullMark = $('#fullMark').val();
@@ -29,7 +30,7 @@
                 saveMark();
             };
             
-            let table = $('#marksheet').DataTable({
+            table = $('#marksheet').DataTable({
                 order: [[ 3, "desc" ]],
                 paging: false,
                 autoWidth: true,
@@ -73,17 +74,6 @@
         </div>
 
         <form id="controlForm" action="" method="get" class="form">
-            <div class="form">
-                <label for="overridedStandardAnswer">The full mark of this question (1-100):</label>
-                <input type="text" id="overridedStandardAnswer" name="overridedStandardAnswer" 
-                       value="{{standardAnswer if standardAnswer is not none}}" 
-                       data-standardAnswer="{{standardAnswer if standardAnswer is not none}}"
-                       />
-            </div>
-            <div class="form">
-                <label for="regenerate">Mark for regeneration this form:</label>
-                <input type="checkbox" id="regenerate" name="regenerate" />              
-            </div>
             <div class="form">
                 <label for="fullMark">The full mark of this question (1-100):</label>
                 <input type="number" id="fullMark" name="fullMark" min="1" max="100" value="1">
@@ -160,7 +150,7 @@
                     </td>
                     <td>{{row["Answer"]}}</td>  
                     <td>
-                        <input type="number" id="mark-{{row["page"]}}" min="0" value="" max="1" step="1" 
+                        <input type="number" id="mark-{{row["page"]}}" min="0" value="{{row["Mark"]}}" max="1" step="1" 
                                class="mark" 
                                data-similarity="{{[row["Similarity"],0]|max}}"
                                data-confidence="{{row["Confidence"]}}"

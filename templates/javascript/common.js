@@ -103,8 +103,7 @@ const loadControlForm = (callback) =>{
 };
 
 const zoomImage = (callback)=>{                
-    const zoom = $('#zoom').val();
-    
+    const zoom = $('#zoom').val();   
 
     const commonLeft =  $('#left').val();
     const commonTop = $('#top').val();
@@ -134,6 +133,7 @@ const zoomImage = (callback)=>{
 
 $(document).ready(() => {     
     loadControlForm(()=>loadMark(()=>zoomImage(()=>saveMark())));  
+    
     
     $('a.toggle-vis').on( 'click', function (e) {
         e.preventDefault();

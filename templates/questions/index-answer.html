@@ -3,8 +3,9 @@
 <head>
 {% include 'questions/header.html' %}       
     <script>
+        let table;
         $(document).ready( function () {
-            let table = $('#marksheet').DataTable({
+            table = $('#marksheet').DataTable({
                 order: [[ 1, "desc" ]],
                 paging: false,
                 autoWidth: true,
