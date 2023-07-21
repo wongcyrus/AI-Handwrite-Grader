@@ -1,11 +1,9 @@
-# ai-scoring-handwriting-assignment
-Jupyter notebook to score student handwriting assignment with AI
-
-Teacher just need to fork this repo and score your student assignment in Codespaces.
+# AI-Handwrite-Grader
+This project designed to help teachers grade their students' handwriting assignments using AI. The notebook provides a template file for the teacher to fill in their class name list and standard answers, and then uses computer vision to analyze the students' scanned assignments and generate a website for the teacher to input scores. The notebook also includes post-processing steps to generate score reports and annotated scripts, as well as an option to email the scores back to the students. This tool can save teachers time and provide more accurate and consistent grading.
 
 ## Template File
-NamelistAndAnswerTemplate.xlsx - the template of your class name list and standard answers.
-smtp-template.config - the GMAIL SMTP Server information.
+1. NamelistAndAnswerTemplate.xlsx - the template of your class name list and standard answers.
+2. smtp-template.config - Rename it to smtp-template.config and provide the GMAIL SMTP Server information
 
 ## High level steps
 1. Begin by forking this repository.
