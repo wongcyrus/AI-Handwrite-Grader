@@ -15,3 +15,4 @@ easyocr
 opencv-python
 sentence-transformers
 termcolor
+Pillow
