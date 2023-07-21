@@ -1,0 +1,33 @@
+{
+	"image": "mcr.microsoft.com/devcontainers/universal:2",
+	"hostRequirements": {
+		"cpus": 4
+	},
+	"waitFor": "onCreateCommand",
+	"updateContentCommand": "python3 -m pip install -r requirements.txt",
+	"postCreateCommand": "",
+	"customizations": {
+		"codespaces": {
+			"openFiles": []
+		},
+		"vscode": {
+			"settings": {
+				"python.defaultInterpreterPath": "~/.python/current/bin/python3",
+				"python.linting.enabled": true,
+				"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
+				"python.linting.flake8Enabled": true
+			},
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [				
+				"ms-python.python",
+				"ms-python.vscode-pylance",			
+				"ms-python.black-formatter",
+				"ms-python.pylint",
+				"GitHub.copilot"
+			]
+		},
+		"settings": {
+			"python.defaultInterpreterPath": "~/.python/current/bin/python3"
+		}
+	}
+}

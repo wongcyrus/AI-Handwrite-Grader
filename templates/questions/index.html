@@ -3,6 +3,7 @@
 <head>
 {% include 'questions/header.html' %}    
     <script>
+        let table;
         $(document).ready( function () {          
             const refreshMark = ()=>{
                 let fullMark = $('#fullMark').val();
@@ -29,7 +30,7 @@
                 saveMark();
             };
             
-            let table = $('#marksheet').DataTable({
+            table = $('#marksheet').DataTable({
                 order: [[ 3, "desc" ]],
                 paging: false,
                 autoWidth: true,
@@ -74,17 +75,6 @@
 
         <form id="controlForm" action="" method="get" class="form">
             <div class="form">
-                <label for="overridedStandardAnswer">The full mark of this question (1-100):</label>
-                <input type="text" id="overridedStandardAnswer" name="overridedStandardAnswer" 
-                       value="{{standardAnswer if standardAnswer is not none}}" 
-                       data-standardAnswer="{{standardAnswer if standardAnswer is not none}}"
-                       />
-            </div>
-            <div class="form">
-                <label for="regenerate">Mark for regeneration this form:</label>
-                <input type="checkbox" id="regenerate" name="regenerate" />              
-            </div>
-            <div class="form">
                 <label for="fullMark">The full mark of this question (1-100):</label>
                 <input type="number" id="fullMark" name="fullMark" min="1" max="100" value="1">
             </div>
@@ -102,18 +92,6 @@
                 <label for="zoom">Image Zoom:</label>
                 <input type="range" id="zoom" name="zoom" min="0.1" max="2" value="1" step="0.1" />  
                 (<span id="currentZoom">1</span>)   
-            </div>
-            <div class="form">
-                <label for="boundingBoxMode">Bounding box mode:</label>        
-                <label class="radio-inline">
-                  <input type="radio" name="boundingBoxMode" id="tractract" value="tractract" checked /> Amazon Textract
-                </label>
-                <label class="radio-inline">
-                  <input type="radio" name="boundingBoxMode" id="tractractTrimedMean" value="tractractTrimedMean" />Amazon Textract (Trimed Mean)
-                </label>
-                <label class="radio-inline">
-                  <input type="radio" name="boundingBoxMode" id="manual" value="manual" />Manual
-                </label>
             </div>
             <div class="form">
                 <label for="left">Left:</label>
@@ -158,26 +136,26 @@
 {% for index, row in dataTable.iterrows() -%}
                   <tr>          
                     <td> 
-                        <div id="crop-{{row["RowNumber"]}}-container" {% if row["Confidence"]|float == 0.0 %} class="imputation" {% endif %}>
+                        <div id="crop-{{row["page"]}}-container" {% if row["Confidence"]|float == 0.0 %} class="imputation" {% endif %}>
                             <img src="../../{{row["Image"]}}" 
-                                 id="crop-{{row["RowNumber"]}}" 
-                                 class="answerImage crop-{{row["RowNumber"]}}"
+                                 id="crop-{{row["page"]}}" 
+                                 class="answerImage crop-{{row["page"]}}"
                                  alt="{{row["Answer"]}}" 
-                                 data-left="{{row["BoundingBox"]["left"]}}"
-                                 data-top="{{row["BoundingBox"]["top"]}}"
-                                 data-width="{{row["BoundingBox"]["width"]}}"
-                                 data-height="{{row["BoundingBox"]["height"]}}"
+                                 data-left="{{row["left"]}}"
+                                 data-top="{{row["top"]}}"
+                                 data-width="{{row["width"]}}"
+                                 data-height="{{row["height"]}}"
                             />
                         </div>   
                     </td>
                     <td>{{row["Answer"]}}</td>  
                     <td>
-                        <input type="number" id="mark-{{row["RowNumber"]}}" min="0" value="1" max="1" step="1" 
+                        <input type="number" id="mark-{{row["page"]}}" min="0" value="{{row["Mark"]}}" max="1" step="1" 
                                class="mark" 
                                data-similarity="{{[row["Similarity"],0]|max}}"
                                data-confidence="{{row["Confidence"]}}"
                                required /> 
-                        <span id="mark-{{row["RowNumber"]}}-locked" class="lock"></span>
+                        <span id="mark-{{row["page"]}}-locked" class="lock"></span>
                     </td>
                     <td>{{'%0.2f'| format([row["Similarity"],0]|max|float)}}</td>
                     <td>{{'%0.2f'| format(row["Confidence"]|float)}}</td>

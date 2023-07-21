@@ -90,9 +90,6 @@ const loadControlForm = (callback) =>{
                     .attr("max",returnData.fullMark)
                     .attr("step",returnData.granularity);
             }
-            if(returnData.boundingBoxMode){
-                $("#"+ returnData.boundingBoxMode).attr("checked", "checked");    
-            }
             if(returnData.regenerate == "on"){
                 $("#regenerate").attr("checked", "checked");    
             }
@@ -106,15 +103,14 @@ const loadControlForm = (callback) =>{
 };
 
 const zoomImage = (callback)=>{                
-    const zoom = $('#zoom').val();
-    
-    const boundingBoxMode = $('input[name="boundingBoxMode"]:checked').val();
-    const commonLeft = boundingBoxMode === 'manual'? $('#left').val() : boundingBoxMode === 'tractractTrimedMean'? textractTrimedMeanBoundingBoxes.left: undefined;
-    const commonTop = boundingBoxMode === 'manual'? $('#top').val() : boundingBoxMode === 'tractractTrimedMean'? textractTrimedMeanBoundingBoxes.top: undefined;
-    const commonWidth = boundingBoxMode === 'manual'? $('#width').val() : boundingBoxMode === 'tractractTrimedMean'? textractTrimedMeanBoundingBoxes.width: undefined;
-    const commonHeight = boundingBoxMode === 'manual'? $('#height').val() : boundingBoxMode === 'tractractTrimedMean'? textractTrimedMeanBoundingBoxes.height: undefined;
+    const zoom = $('#zoom').val();   
 
-    console.log("zoomImage", boundingBoxMode, commonLeft,commonTop,commonWidth,commonHeight);
+    const commonLeft =  $('#left').val();
+    const commonTop = $('#top').val();
+    const commonWidth = $('#width').val() ;
+    const commonHeight =  $('#height').val() ;
+
+    console.log("zoomImage", commonLeft,commonTop,commonWidth,commonHeight);
 
     let left, top, width, height, imageWidth, imageHeight;
 
@@ -137,6 +133,7 @@ const zoomImage = (callback)=>{
 
 $(document).ready(() => {     
     loadControlForm(()=>loadMark(()=>zoomImage(()=>saveMark())));  
+    
     
     $('a.toggle-vis').on( 'click', function (e) {
         e.preventDefault();
@@ -183,11 +180,7 @@ $(document).ready(() => {
     
     $('#controlForm').on('keyup change paste', 'input, select, textarea, radio', e => {
         console.log('Form changed:' + e.target.id +","+ e.target.name);
-        saveControlForm();
-        
-        if("boundingBoxMode" ===  e.target.name){           
-            zoomImage();             
-        }
+        saveControlForm();       
     });
     
     $('#zoom').on('change', e => {

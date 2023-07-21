@@ -29,8 +29,8 @@ body {background-color: white;}
 {% for index, row in dataTable.iterrows() -%}        
 .crop-{{row["RowNumber"]}} {{"{"}}      
     object-fit: none; 
-    object-position: -{{row["BoundingBox"]["left"]}}px -{{row["BoundingBox"]["top"]}}px;
-    width: {{row["BoundingBox"]["width"]}}px;
-    height: {{row["BoundingBox"]["height"]}}px;           
+    object-position: -{{row["left"]}}px -{{row["top"]}}px;
+    width: {{row["width"]}}px;
+    height: {{row["height"]}}px;           
 {{"}"}}
 {% endfor %}       
