@@ -130,11 +130,8 @@ ui-tests/playwright-report
 Terms
 Privacy
 Getting Started.ipynb
-output/*
 data/*
-images/*
 output.zip
 temp.png
-AWSAcademyLeanerLab.config
 smtp.config
 marking_form/*
