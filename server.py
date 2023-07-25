@@ -12,7 +12,8 @@ import re
 import time
 import os
 
-PDF_FILE = "../data/TestScript.pdf"
+file_name = os.environ.get("file_name")
+PDF_FILE = "../data/" + file_name
 file_name = os.path.basename(PDF_FILE)
 file_name = os.path.splitext(file_name)[0]
 base_path = "./marking_form/" + file_name
