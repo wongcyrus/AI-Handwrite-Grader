@@ -1,5 +1,5 @@
 # AI-Handwrite-Grader
-This project designed to help teachers grade their students' handwriting assignments using AI. The notebook provides a template file for the teacher to fill in their class name list and standard answers, and then uses computer vision to analyze the students' scanned assignments and generate a website for the teacher to input scores. The notebook also includes post-processing steps to generate score reports and annotated scripts, as well as an option to email the scores back to the students. This tool can save teachers time and provide more accurate and consistent grading.
+The objective of this initiative is to assist educators in assessing their pupils' handwriting tasks with the aid of artificial intelligence. The notebook comes equipped with a pre-designed file for teachers to input their class roster and correct responses. Afterward, computer vision technology is utilized to examine the students' scanned assignments and generate a website for the instructor to record grades. Additionally, the notebook features post-analysis procedures to produce score reports and annotated scripts, and it also enables the option to send the grades back to the students via email. This tool can help reduce the amount of time teachers spend grading and deliver more precise and uniform evaluations.
 
 ## Template File
 1. NamelistAndAnswerTemplate.xlsx - the template of your class name list and standard answers.
@@ -17,3 +17,6 @@ This project designed to help teachers grade their students' handwriting assignm
 9. Run "scoring_postprocessing.ipynb" to generate score reports and annotated scripts.
 10. Finally, run "email_score.ipynb" to send the script back to the students.
 
+
+## Demo and Explanation in Cantonese
+[![Watch the video](https://img.youtube.com/vi/yhNc9sm9ks0/default.jpg)](https://youtu.be/yhNc9sm9ks0)
