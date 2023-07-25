@@ -29,6 +29,7 @@
 				"ms-python.black-formatter",
 				"ms-python.pylint",
 				"ms-toolsai.jupyter@2023.3.1000892223",
+				"googlecloudtools.cloudcode",
 				"GitHub.copilot"
 			]
 		},
