@@ -33,65 +33,42 @@ class Server(BaseHTTPRequestHandler):
         self.send_response(200)
 
         if self.path == "/":
-            filepath = base_path + "/index.html"
+            filepath = f"{base_path}/index.html"
         else:
-            filepath = base_path + "/" + self.path[1:]
-        mimetype, _ = mimetypes.guess_type(str(filepath))
+            filepath = f"{base_path}/{self.path[1:]}"
+
+        mimetype, _ = mimetypes.guess_type(filepath)
         self.send_header("Content-type", mimetype)
         self.end_headers()
 
-        with open(filepath, "rb") as fh:
-            content = fh.read()
+        with open(filepath, "rb") as f:
+            content = f.read()
         self.wfile.write(content)
 
         return
 
     def do_POST(self):
-        content_length = int(
-            self.headers["Content-Length"]
-        )  # <--- Gets the size of data
-        post_data = self.rfile.read(content_length)  # <--- Gets the data itself
-        result = re.search("\/questions\/(.*)\/index.html", self.path)
+        content_length = int(self.headers["Content-Length"])
+        post_data = self.rfile.read(content_length)
+        result = re.search(r"\/questions\/(.*)\/index.html", self.path)
         question = result.group(1)
 
-        json_str = post_data.decode("utf-8")
-        data = json.loads(json_str)
-        print("New data")
-        print(json_str)
-        print()
-        print(data)
-        print()
-        prefix = ""
-        if data["type"] == "mark":
-            prefix = "mark"
-        elif data["type"] == "control":
-            prefix = "control"
-        filepath = base_path_questions + "/" + question + "/" + prefix + ".json"
+        data = json.loads(post_data.decode("utf-8"))
+        logging.info("New data: %s", json.dumps(data))
 
-        json_str = json.dumps(data["data"])
-        print(json_str)
-        print()
-        f = open(filepath, "w")
-        f.write(json_str)
-        f.close()
+        prefix = {"mark": "mark", "control": "control"}.get(data["type"], "")
+        filepath = f"{base_path_questions}/{question}/{prefix}.json"
+
+        with open(filepath, "w") as f:
+            json.dump(data["data"], f)
 
         timestr = time.strftime("%Y%m%d-%H%M%S")
-        filepath = (
-            base_path_questions
-            + "/"
-            + question
-            + "/"
-            + prefix
-            + "-"
-            + timestr
-            + ".json"
-        )
+        filepath = f"{base_path_questions}/{question}/{prefix}-{timestr}.json"
 
-        f = open(filepath, "w")
-        f.write(json_str)
-        f.close()
+        with open(filepath, "w") as f:
+            json.dump(data["data"], f)
 
-        logging.info("Saveed: " + str(filepath))
+        logging.info(f"Saved: {filepath}")
 
         self._set_response()
         self.wfile.write(post_data)
