@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    {% include 'questions/header.jinja' %}
+    <script>
+        let table;
+        $(document).ready(function () {
+            const refreshMark = () => {
+                let fullMark = $('#fullMark').val();
+                let minimumSimilarity = $('#minimumSimilarity').val();
+                let granularity = $('#granularity').val();
+                $('.mark')
+                    .attr("max", $('#fullMark').val())
+                    .attr("step", $('#granularity').val())
+                    .each(function (element) {
+                        let overridedMark = $("#" + element.id + "-locked").html();
+
+                        if (overridedMark) {
+                            console.log("overridedMark:" + overridedMark);
+                            return;
+                        }
+                        let similarity = $(this).data("similarity");
+                        if (similarity >= minimumSimilarity) $(this).val(fullMark);
+                        else {
+                            let mark = fullMark * similarity;
+                            mark = Math.floor(mark / granularity) * granularity;
+                            $(this).val(mark);
+                        }
+                    });
+                saveMark();
+            };
+
+            table = $('#marksheet').DataTable({
+                order: [[3, "desc"]],
+                paging: false,
+                autoWidth: true,
+                columnDefs: [
+                    { width: '50%', targets: 0 }
+                ],
+            });
+
+            $('#minimumSimilarity').on('change', function (e) {
+                $('#currentSimilarity').html(e.target.value);
+                refreshMark();
+            });
+
+            $('#granularity').on('change', function (e) {
+                $('#currentGranularity').html(e.target.value);
+                refreshMark();
+            });
+
+            $('#fullMark').on('change', function (e) {
+                refreshMark();
+            });
+
+            $('#overridedStandardAnswer').on('change', function (e) {
+                let newValue = e.target.value;
+                let standardAnswer = $('#overridedStandardAnswer').data('standardAnswer');
+                if (newValue !== standardAnswer)
+                    $('#regenerate').prop('checked', true);
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <a href="../../index.html">Back to the question list</a>
+            <h1>Grading form for {{studentsScriptFileName}} - {{question}}
+                (Answer: {{standardAnswer if standardAnswer is not none}})</h1>
+        </header>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <section>
+                        <div id="dialog" title="Large Image">
+                            <img id="largeImage" src=""
+                                style="vertical-align: top; padding: 0px 10px 10px 2px; width: 100%; height: 100%" />
+                        </div>
+                        <form id="controlForm" action="" method="get" class="form">
+                            <div class="form">
+                                <label for="fullMark">The full mark of this question (1-100):</label>
+                                <input type="number" id="fullMark" name="fullMark" min="1" max="100" value="1">
+                            </div>
+                            <div class="form">
+                                <label for="minimumSimilarity">The minimum Similarity value of full mark:</label>
+                                <input type="range" id="minimumSimilarity" name="minimumSimilarity" min="0.1" max="1"
+                                    value="0.8" step="0.1" />
+                                (<span id="currentSimilarity">0.8</span>)
+                            </div>
+                            <div class="form">
+                                <label for="granularity">The granularity of mark:</label>
+                                <input type="range" id="granularity" name="granularity" min="0" max="1" value="1"
+                                    step="0.25" />
+                                (<span id="currentGranularity">1</span>)
+                            </div>
+                            <div class="form">
+                                <label for="zoom">Image Zoom:</label>
+                                <input type="range" id="zoom" name="zoom" min="0.1" max="2" value="1" step="0.1" />
+                                (<span id="currentZoom">1</span>)
+                            </div>
+                            <div class="form">
+                                <label for="left">Left:</label>
+                                <input type="number" id="left" name="left" min="0" step="10" class="changeBoundBox"
+                                    value="{{estimatedBoundingBox[" left"]}}" />
+                            </div>
+                            <div class="form">
+                                <label for="top">Top:</label>
+                                <input type="number" id="top" name="top" min="0" step="10" class="changeBoundBox"
+                                    value="{{estimatedBoundingBox[" top"]}}" />
+                            </div>
+                            <div class="form">
+                                <label for="height">Height:</label>
+                                <input type="number" id="height" name="height" min="0" step="10" class="changeBoundBox"
+                                    value="{{estimatedBoundingBox[" height"]}}" />
+                            </div>
+                            <div class="form">
+                                <label for="width">Width:</label>
+                                <input type="number" id="width" name="width" min="0" step="10" class="changeBoundBox"
+                                    value="{{estimatedBoundingBox[" width"]}}" />
+                            </div>
+                        </form>
+                    </section>
+                </div>
+                <div class="col">
+                    <div class="col-auto">
+                        <label for="scoringPromptTextarea" class="form-label">Scoring Prompt</label>
+                        <textarea class="form-control" id="scoringPromptTextarea" rows="12"></textarea>
+                        <button type="submit" class="btn btn-primary mb-3">Grade</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <div>
+                        Show/Hide column:
+                        <a class="toggle-vis" data-column="0" href="#">Image</a> -
+                        <a class="toggle-vis" data-column="1" href="#">Answer</a> -
+                        <a class="toggle-vis" data-column="2" href="#">Mark</a> -
+                        <a class="toggle-vis" data-column="3" href="#">Similarity</a> -
+                        <a class="toggle-vis" data-column="4" href="#">Confidence Score</a>
+                    </div>
+                    <form id="markForm" action="" method="get" class="form">
+                        <table id="marksheet" class="display">
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Answer</th>
+                                    <th>Mark</th>
+                                    <th>Similarity</th>
+                                    <th>Confidence Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for index, row in dataTable.iterrows() -%}
+                                <tr>
+                                    <td>
+                                        <div id="crop-{{row["page"]}}-container" {% if row["Confidence"]|float==0.0 %}
+                                            class="imputation" {% endif %}>
+                                            <img src="../../{{row["Image"]}}" id="crop-{{row["page"]}}"
+                                                class="answerImage crop-{{row["page"]}}" alt="{{row["Answer"]}}"
+                                                data-left="{{row["left"]}}" data-top="{{row["top"]}}"
+                                                data-width="{{row["width"]}}" data-height="{{row["height"]}}" />
+                                        </div>
+                                    </td>
+                                    <td>{{row["Answer"]}}</td>
+                                    <td>
+                                        <input type="number" id="mark-{{row["page"]}}" min="0" value="{{row["Mark"]}}"
+                                            max="1" step="1" class="mark" data-similarity="{{[row["Similarity"],0]|max}}" data-confidence="{{row["Confidence"]}}" required />
+                                        <span id="mark-{{row["page"]}}-locked" class="lock"></span>
+                                    </td>
+                                    <td>{{'%0.2f'| format([row["Similarity"],0]|max|float)}}</td>
+                                    <td>{{'%0.2f'| format(row["Confidence"]|float)}}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <footer>
+            <p>Created by Higher Diploma in Cloud and Data Centre Administration Developement Team.</p>
+        </footer>
+    </div>
+</body>
+
+</html>
