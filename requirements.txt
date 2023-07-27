@@ -19,4 +19,4 @@ Pillow
 google-cloud-core
 google-cloud-vision
 google-cloud-aiplatform
-google-cloud-storage 
+langchain

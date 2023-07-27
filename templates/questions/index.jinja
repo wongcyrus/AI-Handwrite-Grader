@@ -126,9 +126,16 @@
                 </div>
                 <div class="col">
                     <div class="col-auto">
-                        <label for="scoringPromptTextarea" class="form-label">Scoring Prompt</label>
-                        <textarea class="form-control" id="scoringPromptTextarea" rows="12"></textarea>
-                        <button type="submit" class="btn btn-primary mb-3">Grade</button>
+                        <label for="scoringPromptTextarea" class="form-label">Scoring Prompt <span id="marks"
+                                class="badge bg-primary"></span></label>
+                        <textarea class="form-control" id="scoringPromptTextarea" rows="10"></textarea>
+                        <input type="text" id="student_answer" name="student_answer" />
+                        <button type="submit" id="scoringAnswer" class="btn btn-primary mb-3">Test</button>
+                        <button type="submit" id="scoringAllAnswers" class="btn btn-primary mb-3">Grade All</button>
+                        <p id="feedback" class="text-break"></p>
+                        <div id="loading" class="spinner-border" style="display: none;" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -153,6 +160,7 @@
                                     <th>Mark</th>
                                     <th>Similarity</th>
                                     <th>Confidence Score</th>
+                                    <th>Feedback</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -167,7 +175,7 @@
                                                 data-width="{{row["width"]}}" data-height="{{row["height"]}}" />
                                         </div>
                                     </td>
-                                    <td>{{row["Answer"]}}</td>
+                                    <td id="answer-{{row["page"]}}" class="answer">{{row["Answer"]}}</td>
                                     <td>
                                         <input type="number" id="mark-{{row["page"]}}" min="0" value="{{row["Mark"]}}"
                                             max="1" step="1" class="mark" data-similarity="{{[row["Similarity"],0]|max}}" data-confidence="{{row["Confidence"]}}" required />
@@ -175,6 +183,7 @@
                                     </td>
                                     <td>{{'%0.2f'| format([row["Similarity"],0]|max|float)}}</td>
                                     <td>{{'%0.2f'| format(row["Confidence"]|float)}}</td>
+                                    <td id="feedback-{{row["page"]}}" ></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

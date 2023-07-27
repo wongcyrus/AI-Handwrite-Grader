@@ -30,6 +30,7 @@
 				"ms-python.pylint",
 				"ms-toolsai.jupyter@2023.3.1000892223",
 				"googlecloudtools.cloudcode",
+				"samuelcolvin.jinjahtml",
 				"GitHub.copilot"
 			]
 		},

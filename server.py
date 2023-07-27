@@ -11,6 +11,7 @@ import mimetypes
 import re
 import time
 import os
+from ai_grader import get_score_and_feedback
 
 file_name = os.environ.get("file_name")
 PDF_FILE = "../data/" + file_name
@@ -48,13 +49,25 @@ class Server(BaseHTTPRequestHandler):
         return
 
     def do_POST(self):
+        logging.info(self.path)
+
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
-        result = re.search(r"\/questions\/(.*)\/index.html", self.path)
+        result = re.search(r"\/questions\/(.*)\/(.*)", self.path)
         question = result.group(1)
-
         data = json.loads(post_data.decode("utf-8"))
         logging.info("New data: %s", json.dumps(data))
+
+        if self.path.endswith("grade.json"):
+            logging.info("prompt")
+            prompt = data["prompt"]
+            answer = data["answer"]
+            page = data["page"]
+            result = get_score_and_feedback(prompt, answer)
+            result["page"] = page
+            self._set_response()
+            self.wfile.write(json.dumps(result).encode())
+            return
 
         prefix = {"mark": "mark", "control": "control"}.get(data["type"], "")
         filepath = f"{base_path_questions}/{question}/{prefix}.json"
