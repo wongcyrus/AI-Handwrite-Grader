@@ -135,3 +135,5 @@ output.zip
 temp.png
 smtp.config
 marking_form/*
+venv/*
+
