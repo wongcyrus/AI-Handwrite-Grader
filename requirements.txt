@@ -15,7 +15,7 @@ easyocr
 opencv-python
 sentence-transformers
 termcolor
-Pillow
+Pillow==9.5.0
 google-cloud-core
 google-cloud-vision
 google-cloud-aiplatform
