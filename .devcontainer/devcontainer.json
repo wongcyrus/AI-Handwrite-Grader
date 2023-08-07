@@ -1,9 +1,10 @@
 {
-	"image": "mcr.microsoft.com/devcontainers/universal:2",
+	"image": "mcr.microsoft.com/devcontainers/python:3.11",
 	"hostRequirements": {
 		"cpus": 4
 	},
 	"waitFor": "onCreateCommand",
+	"initializeCommand": "docker system prune --all --force",
 	"updateContentCommand": "python3 -m pip install -r requirements.txt",
 	"postCreateCommand": "",
 	"customizations": {
@@ -15,17 +16,15 @@
 				"python.defaultInterpreterPath": "~/.python/current/bin/python3",
 				"python.linting.enabled": true,
 				"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
-				"python.linting.flake8Enabled": true,
-				"extensions.autoUpdate": "false",
-				"extensions.autoCheckUpdates": false
+				"python.linting.flake8Enabled": true
 			},
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [				
-				"ms-python.python@2023.8.0",
+				"ms-python.python",
 				"ms-python.vscode-pylance",			
 				"ms-python.black-formatter",
 				"ms-python.pylint",
-				"ms-toolsai.jupyter@2023.3.1000892223",
+				"ms-toolsai.jupyter",
 				"GitHub.copilot"
 			]
 		},
