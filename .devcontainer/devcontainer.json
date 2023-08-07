@@ -9,6 +9,8 @@
 	"waitFor": "onCreateCommand",
 	"updateContentCommand": "python3 -m pip install -r requirements.txt",
 	"postCreateCommand": "",
+	"forwardPorts":[8000],
+	"portsAttributes": {"8000": {"label": "Application port"}},
 	"customizations": {
 		"codespaces": {
 			"openFiles": []
@@ -18,19 +20,18 @@
 				"python.defaultInterpreterPath": "~/.python/current/bin/python3",
 				"python.linting.enabled": true,
 				"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
-				"python.linting.flake8Enabled": true,
-				"extensions.autoUpdate": "false",
-				"extensions.autoCheckUpdates": false
+				"python.linting.flake8Enabled": true		
 			},
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [				
-				"ms-python.python@2023.8.0",
+				"ms-python.python",
 				"ms-python.vscode-pylance",			
 				"ms-python.black-formatter",
 				"ms-python.pylint",
-				"ms-toolsai.jupyter@2023.3.1000892223",
+				"ms-toolsai.jupyter",
 				"googlecloudtools.cloudcode",
 				"samuelcolvin.jinjahtml",
+				"ms-python.flake8",
 				"GitHub.copilot"
 			]
 		},

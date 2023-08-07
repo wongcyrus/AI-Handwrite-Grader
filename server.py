@@ -94,7 +94,7 @@ def run(server_class=HTTPServer, handler_class=Server, port=8080):
     logging.basicConfig(
         filename=base_path + "/server.log", filemode="w", level=logging.DEBUG
     )
-    server_address = ("", port)
+    server_address = ("localhost", port)
     httpd = server_class(server_address, handler_class)
     logging.info("Starting httpd...\n")
     try:
