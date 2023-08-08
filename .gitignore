@@ -131,6 +131,7 @@ Terms
 Privacy
 Getting Started.ipynb
 data/*
+!data/README.md
 output.zip
 temp.png
 smtp.config
