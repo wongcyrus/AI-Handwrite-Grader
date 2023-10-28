@@ -16,3 +16,4 @@ opencv-python
 sentence-transformers
 termcolor
 Pillow==9.5.0
+Flask
