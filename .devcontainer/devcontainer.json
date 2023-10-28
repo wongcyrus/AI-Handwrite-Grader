@@ -12,10 +12,7 @@
 		},
 		"vscode": {
 			"settings": {
-				"python.defaultInterpreterPath": "~/.python/current/bin/python3",
-				"python.linting.enabled": true,
-				"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
-				"python.linting.flake8Enabled": true
+				"python.defaultInterpreterPath": "~/.python/current/bin/python3"
 			},
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
@@ -29,7 +26,10 @@
 			]
 		},
 		"settings": {
-			"python.defaultInterpreterPath": "~/.python/current/bin/python3"
+			"python.defaultInterpreterPath": "~/.python/current/bin/python3",
+			"python.linting.enabled": true,
+			"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
+			"python.linting.flake8Enabled": true
 		}
 	}
 }
