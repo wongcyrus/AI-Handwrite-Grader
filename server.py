@@ -1,10 +1,12 @@
-from flask import Flask, request
+from flask import Flask, request ,Response
 import logging
 import json
 import mimetypes
-import re
 import time
 import os
+from datetime import datetime, date, timedelta
+
+import flask
 
 app = Flask(__name__)
 
@@ -17,6 +19,7 @@ base_path_images = base_path + "/images/"
 base_path_annotations = base_path + "/annotations/"
 base_path_questions = base_path + "/questions"
 base_path_javascript = base_path + "/javascript"
+
 
 
 @app.route("/", methods=["GET"])
@@ -33,7 +36,19 @@ def get_file(path):
     filepath = base_path + "/" + path
     mimetype, _ = mimetypes.guess_type(str(filepath))
     with open(filepath, "rb") as fh:
-        content = fh.read()
+        content = fh.read()   
+   
+    if mimetype == "image/jpeg":    
+        print(mimetype)   
+        minutes = 180
+        then = datetime.now() + timedelta(minutes=minutes)
+        response = flask.Response()
+        response.headers.add('Accept-Ranges', 'bytes')
+        response.headers.add('Cache-Control', 'public,max-age=%d' % int(60 * minutes))
+        response.headers.add('Expires', then.strftime("%a, %d %b %Y %H:%M:%S GMT"))
+        response.headers.add('Content-Type', mimetype)
+        response.data = content
+        return response
     return content, 200, {"Content-type": mimetype}
 
 
