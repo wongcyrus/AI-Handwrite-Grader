@@ -29,3 +29,28 @@ https://techcommunity.microsoft.com/t5/educator-developer-blog/the-power-of-ai-i
 
 ## Demo and Explanation (Cantonese)
 [![Watch the video](https://img.youtube.com/vi/yhNc9sm9ks0/0.jpg)](https://youtu.be/yhNc9sm9ks0)
+
+
+
+## Maintance requirement file
+Update requirements-dev.txt
+```
+pip list --format=json | jq -r ".[].name" > requirements-dev.txt
+```
+Revert to Pillow==9.5.0 if you hits error.
+
+
+## Using Vertex AI Gemini Pro
+
+### GCP application Login 
+```
+gcloud auth application-default login
+gcloud config set project XXXXX
+gcloud auth application-default set-quota-project XXXXX
+```
+
+### Enable Google Cloud API
+```
+gcloud services enable speech.googleapis.com
+gcloud services enable aiplatform.googleapis.com
+```
