@@ -35,6 +35,7 @@ https://techcommunity.microsoft.com/t5/educator-developer-blog/the-power-of-ai-i
 ## Maintance requirement file
 Update requirements-dev.txt
 ```
+pip freeze > requirements.txt
 pip list --format=json | jq -r ".[].name" > requirements-dev.txt
 ```
 Revert to Pillow==9.5.0 if you hits error.

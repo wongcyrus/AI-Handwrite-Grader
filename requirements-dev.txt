@@ -10,6 +10,7 @@ certifi
 charset-normalizer
 click
 cmake
+cobble
 comm
 contourpy
 cycler
@@ -67,6 +68,7 @@ langchain-text-splitters
 langsmith
 lazy_loader
 lit
+mammoth
 MarkupSafe
 marshmallow
 matplotlib
