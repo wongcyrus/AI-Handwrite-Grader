@@ -13,6 +13,19 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      azurite:
+        image: mcr.microsoft.com/azure-storage/azurite:latest
+        ports:
+          - 10000:10000
+          - 10001:10001
+          - 10002:10002
+        options: >-
+          --health-cmd "curl -f http://localhost:10002/devstoreaccount1 || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
     steps:
     - uses: actions/checkout@v4
     
@@ -27,17 +40,25 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-test.txt
     
+    - name: Wait for Azurite
+      run: |
+        timeout 30 bash -c 'until curl -f http://localhost:10002/devstoreaccount1; do sleep 1; done'
+    
     - name: Run tests
       run: |
         cd app
         export FLASK_ENV=testing
-        export AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=test;AccountKey=test;EndpointSuffix=core.windows.net"
+        export AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://localhost:10000/devstoreaccount1;QueueEndpoint=http://localhost:10001/devstoreaccount1;TableEndpoint=http://localhost:10002/devstoreaccount1;"
         export AI_FOUNDRY_ENDPOINT="https://test.cognitiveservices.azure.com/"
         export MODEL_DEPLOYMENT_NAME="gpt-4o-mini"
         export SECRET_KEY="test-secret-key"
         pytest tests/ --verbose --cov=. --cov-report=xml
     
     - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./app/coverage.xml
+        fail_ci_if_error: false
       uses: codecov/codecov-action@v3
       with:
         file: ./app/coverage.xml
