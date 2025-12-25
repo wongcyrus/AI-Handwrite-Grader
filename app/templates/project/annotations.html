@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>Review Annotations - {{ project.name }}</h2>
+                <p class="text-muted mb-0">Review and refine AI-generated annotations</p>
+            </div>
+            <div>
+                <a href="{{ url_for('project_detail', project_id=project.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Project
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Annotation Controls -->
+            <div class="col-md-3">
+                <div class="card sticky-top" style="top: 20px;">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tools me-2"></i>Annotation Tools
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Current Page</label>
+                            <select id="pageSelect" class="form-select">
+                                {% for annotation in annotations %}
+                                    <option value="{{ annotation.page }}">Page {{ annotation.page }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Confidence Threshold</label>
+                            <input type="range" class="form-range" id="confidenceThreshold" 
+                                   min="0" max="1" step="0.1" value="0.8">
+                            <small class="text-muted">Current: <span id="confidenceValue">0.8</span></small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button class="btn btn-success w-100" id="saveAnnotations">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>Legend</h6>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="bg-success" style="width: 20px; height: 20px; margin-right: 10px;"></div>
+                                <small>High Confidence (>0.8)</small>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="bg-warning" style="width: 20px; height: 20px; margin-right: 10px;"></div>
+                                <small>Medium Confidence (0.5-0.8)</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-danger" style="width: 20px; height: 20px; margin-right: 10px;"></div>
+                                <small>Low Confidence (<0.5)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Annotation Canvas -->
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-image me-2"></i>Page <span id="currentPageNumber">1</span>
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="annotationCanvas" class="position-relative" style="min-height: 600px; overflow: auto;">
+                            <!-- Page image will be loaded here -->
+                            <img id="pageImage" class="img-fluid" style="max-width: 100%;" />
+                            
+                            <!-- Annotation overlays will be added here -->
+                            <div id="annotationOverlays"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Annotation Details -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>Detected Questions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="questionsList">
+                            <!-- Questions will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentAnnotations = {{ annotations|tojson }};
+let currentPage = 1;
+let confidenceThreshold = 0.8;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const pageSelect = document.getElementById('pageSelect');
+    const confidenceSlider = document.getElementById('confidenceThreshold');
+    const confidenceValue = document.getElementById('confidenceValue');
+    const saveButton = document.getElementById('saveAnnotations');
+    
+    // Initialize
+    if (currentAnnotations.length > 0) {
+        loadPage(currentAnnotations[0].page);
+    }
+    
+    // Page selection
+    pageSelect.addEventListener('change', function() {
+        loadPage(this.value);
+    });
+    
+    // Confidence threshold
+    confidenceSlider.addEventListener('input', function() {
+        confidenceThreshold = parseFloat(this.value);
+        confidenceValue.textContent = confidenceThreshold;
+        updateAnnotationDisplay();
+    });
+    
+    // Save annotations
+    saveButton.addEventListener('click', function() {
+        saveAnnotations();
+    });
+    
+    function loadPage(pageNum) {
+        currentPage = pageNum;
+        document.getElementById('currentPageNumber').textContent = pageNum;
+        
+        // Find annotation data for this page
+        const pageAnnotation = currentAnnotations.find(a => a.page == pageNum);
+        
+        if (pageAnnotation) {
+            // Load page image (placeholder for now)
+            const pageImage = document.getElementById('pageImage');
+            pageImage.src = `/project/{{ project.id }}/page/${pageNum}/image`;
+            
+            // Display annotations
+            displayAnnotations(pageAnnotation.data);
+            displayQuestionsList(pageAnnotation.data);
+        }
+    }
+    
+    function displayAnnotations(annotationData) {
+        const overlaysContainer = document.getElementById('annotationOverlays');
+        overlaysContainer.innerHTML = '';
+        
+        if (annotationData.questions) {
+            annotationData.questions.forEach((question, index) => {
+                const overlay = createAnnotationOverlay(question, index);
+                overlaysContainer.appendChild(overlay);
+            });
+        }
+    }
+    
+    function createAnnotationOverlay(question, index) {
+        const overlay = document.createElement('div');
+        overlay.className = 'annotation-overlay position-absolute border';
+        overlay.style.left = question.bbox[0] + 'px';
+        overlay.style.top = question.bbox[1] + 'px';
+        overlay.style.width = (question.bbox[2] - question.bbox[0]) + 'px';
+        overlay.style.height = (question.bbox[3] - question.bbox[1]) + 'px';
+        
+        // Color based on confidence
+        const confidence = question.confidence || 0;
+        if (confidence > 0.8) {
+            overlay.classList.add('border-success');
+            overlay.style.backgroundColor = 'rgba(40, 167, 69, 0.2)';
+        } else if (confidence > 0.5) {
+            overlay.classList.add('border-warning');
+            overlay.style.backgroundColor = 'rgba(255, 193, 7, 0.2)';
+        } else {
+            overlay.classList.add('border-danger');
+            overlay.style.backgroundColor = 'rgba(220, 53, 69, 0.2)';
+        }
+        
+        // Add label
+        const label = document.createElement('div');
+        label.className = 'position-absolute bg-primary text-white px-2 py-1 small';
+        label.style.top = '-25px';
+        label.style.left = '0';
+        label.textContent = question.id || `Q${index + 1}`;
+        overlay.appendChild(label);
+        
+        // Make draggable and resizable (simplified)
+        overlay.addEventListener('mousedown', function(e) {
+            // Add drag functionality here
+        });
+        
+        return overlay;
+    }
+    
+    function displayQuestionsList(annotationData) {
+        const questionsList = document.getElementById('questionsList');
+        questionsList.innerHTML = '';
+        
+        if (annotationData.questions) {
+            annotationData.questions.forEach((question, index) => {
+                const questionItem = document.createElement('div');
+                questionItem.className = 'card mb-2';
+                
+                const confidence = question.confidence || 0;
+                const confidenceClass = confidence > 0.8 ? 'success' : confidence > 0.5 ? 'warning' : 'danger';
+                
+                questionItem.innerHTML = `
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${question.id || `Q${index + 1}`}</strong>
+                                <span class="text-muted ms-2">${question.type || 'Unknown'}</span>
+                            </div>
+                            <div>
+                                <span class="badge bg-${confidenceClass}">${(confidence * 100).toFixed(0)}%</span>
+                                <button class="btn btn-sm btn-outline-primary ms-2" onclick="editQuestion(${index})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                        ${question.extracted_text ? `<small class="text-muted">${question.extracted_text.substring(0, 100)}...</small>` : ''}
+                    </div>
+                `;
+                
+                questionsList.appendChild(questionItem);
+            });
+        }
+    }
+    
+    function updateAnnotationDisplay() {
+        // Update visibility based on confidence threshold
+        const overlays = document.querySelectorAll('.annotation-overlay');
+        overlays.forEach(overlay => {
+            // Implementation for filtering by confidence
+        });
+    }
+    
+    function saveAnnotations() {
+        const saveButton = document.getElementById('saveAnnotations');
+        saveButton.disabled = true;
+        saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        
+        // Prepare annotation data
+        const annotationsToSave = {};
+        currentAnnotations.forEach(annotation => {
+            annotationsToSave[annotation.page] = annotation.data;
+        });
+        
+        fetch(`/project/{{ project.id }}/annotations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(annotationsToSave)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Annotations saved successfully!');
+                window.location.href = `/project/{{ project.id }}`;
+            } else {
+                alert('Error saving annotations: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to save annotations. Please try again.');
+        })
+        .finally(() => {
+            saveButton.disabled = false;
+            saveButton.innerHTML = '<i class="fas fa-save me-2"></i>Save Changes';
+        });
+    }
+});
+
+function editQuestion(index) {
+    // Implementation for editing question details
+    alert('Edit functionality will be implemented here');
+}
+</script>
+
+<style>
+.annotation-overlay {
+    cursor: move;
+    border-width: 2px !important;
+}
+
+.annotation-overlay:hover {
+    opacity: 0.8;
+}
+
+#annotationCanvas {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

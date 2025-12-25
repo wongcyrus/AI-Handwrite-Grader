@@ -1,0 +1,83 @@
+/* Static files for the application */
+
+.annotation-overlay {
+    cursor: move;
+    border-width: 2px !important;
+    transition: opacity 0.2s;
+}
+
+.annotation-overlay:hover {
+    opacity: 0.8;
+}
+
+#annotationCanvas {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.progress-stage {
+    transition: all 0.3s ease;
+}
+
+.progress-stage.active {
+    color: #28a745 !important;
+}
+
+.progress-stage.active i {
+    color: #28a745 !important;
+}
+
+.sticky-top {
+    position: sticky;
+    top: 20px;
+    z-index: 1020;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.btn {
+    border-radius: 0.375rem;
+}
+
+.form-control, .form-select {
+    border-radius: 0.375rem;
+}
+
+.alert {
+    border-radius: 0.375rem;
+}
+
+/* Loading spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* File upload styling */
+.form-control[type="file"] {
+    padding: 0.375rem 0.75rem;
+}
+
+/* Badge styling */
+.badge {
+    font-size: 0.75em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sticky-top {
+        position: relative;
+        top: auto;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn {
+        font-size: 0.875rem;
+    }
+}

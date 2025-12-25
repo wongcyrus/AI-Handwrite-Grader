@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>{{ project.name }}</h2>
+                <p class="text-muted mb-0">{{ project.description or 'No description provided' }}</p>
+            </div>
+            <div>
+                <span class="badge bg-{{ 'success' if project.status == 'completed' else 'primary' if project.status == 'processing' else 'secondary' }} fs-6">
+                    {{ project.status.title() }}
+                </span>
+            </div>
+        </div>
+
+        {% if project.status == 'created' %}
+            <!-- File Upload Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-upload me-2"></i>Upload Files
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="pdf_file" class="form-label">
+                                        <i class="fas fa-file-pdf text-danger me-2"></i>Student Assignment PDF
+                                    </label>
+                                    <input type="file" class="form-control" id="pdf_file" name="pdf_file" 
+                                           accept=".pdf" required>
+                                    <div class="form-text">Upload the scanned student assignments as a single PDF file.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="excel_file" class="form-label">
+                                        <i class="fas fa-file-excel text-success me-2"></i>Answer Template Excel
+                                    </label>
+                                    <input type="file" class="form-control" id="excel_file" name="excel_file" 
+                                           accept=".xlsx,.xls" required>
+                                    <div class="form-text">Upload the Excel file with student names and correct answers.</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-2"></i>Upload and Start Processing
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if project.status == 'processing' %}
+            <!-- Processing Status -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>AI Processing Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Processing with AI agents...</span>
+                        <span id="progress-text">0%</span>
+                    </div>
+                    <div class="progress mb-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             id="progress-bar" style="width: 0%"></div>
+                    </div>
+                    
+                    <div id="processing-stages">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-eye text-muted me-2"></i>
+                            <span class="text-muted">OCR Text Extraction</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-th-large text-muted me-2"></i>
+                            <span class="text-muted">Layout Analysis</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-question-circle text-muted me-2"></i>
+                            <span class="text-muted">Question Detection</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-edit text-muted me-2"></i>
+                            <span class="text-muted">Answer Extraction</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-check-circle text-muted me-2"></i>
+                            <span class="text-muted">Quality Validation</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if project.status == 'annotated' %}
+            <!-- Annotation Review -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2"></i>Review AI Annotations
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        AI processing completed! Review the annotations below and make any necessary adjustments.
+                    </p>
+                    <a href="{{ url_for('review_annotations', project_id=project.id) }}" class="btn btn-primary">
+                        <i class="fas fa-eye me-2"></i>Review Annotations
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if project.status == 'scored' %}
+            <!-- Scoring Complete -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Scoring Complete
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        All assignments have been scored! You can now generate reports and send results.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('generate_reports', project_id=project.id) }}" class="btn btn-primary">
+                            <i class="fas fa-file-excel me-2"></i>Generate Reports
+                        </a>
+                        <a href="{{ url_for('send_results', project_id=project.id) }}" class="btn btn-success">
+                            <i class="fas fa-envelope me-2"></i>Send Results
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Project Info -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Project Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Created:</strong> {{ project.created_at[:19].replace('T', ' ') }}</p>
+                        <p><strong>Status:</strong> {{ project.status.title() }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        {% if project.pdf_url %}
+                            <p><strong>PDF File:</strong> <i class="fas fa-check text-success"></i> Uploaded</p>
+                        {% endif %}
+                        {% if project.excel_url %}
+                            <p><strong>Excel File:</strong> <i class="fas fa-check text-success"></i> Uploaded</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadForm = document.getElementById('uploadForm');
+    
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(uploadForm);
+            const submitBtn = uploadForm.querySelector('button[type="submit"]');
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+            
+            fetch(`/project/{{ project.id }}/upload`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Upload and Start Processing';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Upload failed. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Upload and Start Processing';
+            });
+        });
+    }
+    
+    // Auto-refresh for processing status
+    {% if project.status == 'processing' %}
+    function updateStatus() {
+        fetch(`/project/{{ project.id }}/status`)
+            .then(response => response.json())
+            .then(data => {
+                const progressBar = document.getElementById('progress-bar');
+                const progressText = document.getElementById('progress-text');
+                
+                if (progressBar && progressText) {
+                    progressBar.style.width = `${data.progress || 0}%`;
+                    progressText.textContent = `${data.progress || 0}%`;
+                    
+                    if (data.status === 'completed' || data.status === 'annotated') {
+                        location.reload();
+                    }
+                }
+            })
+            .catch(error => console.error('Status update error:', error));
+    }
+    
+    // Update every 3 seconds
+    setInterval(updateStatus, 3000);
+    updateStatus(); // Initial call
+    {% endif %}
+});
+</script>
+{% endblock %}
