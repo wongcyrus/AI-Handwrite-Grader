@@ -1,0 +1,59 @@
+name: Deploy AI Grader
+
+on:
+  push:
+    branches: [ user-friendly-mode ]
+  pull_request:
+    branches: [ user-friendly-mode ]
+
+env:
+  AZURE_CONTAINER_REGISTRY: aigraderdev
+  IMAGE_NAME: ai-grader-app
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Azure Container Registry
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io
+        username: ${{ secrets.AZURE_ACR_USERNAME }}
+        password: ${{ secrets.AZURE_ACR_PASSWORD }}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./app
+        push: true
+        tags: |
+          ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
+          ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Deploy to Azure Container Instances
+      run: |
+        az container restart \
+          --resource-group ai-grader-dev-rg \
+          --name ai-grader-dev-web \
+          --no-wait
+    
+    - name: Run Terraform
+      if: github.ref == 'refs/heads/user-friendly-mode'
+      run: |
+        cd terraform/environments/dev
+        terraform init
+        terraform plan -var-file="terraform.tfvars"
+        terraform apply -auto-approve -var-file="terraform.tfvars"

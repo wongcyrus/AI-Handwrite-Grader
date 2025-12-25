@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-tachometer-alt text-primary me-2"></i>
+                Dashboard
+            </h2>
+            <a href="{{ url_for('create_project') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>New Project
+            </a>
+        </div>
+
+        {% if projects %}
+            <div class="row g-4">
+                {% for project in projects %}
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">{{ project.name }}</h5>
+                                <span class="badge bg-{{ 'success' if project.status == 'completed' else 'primary' if project.status == 'processing' else 'secondary' }}">
+                                    {{ project.status.title() }}
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text text-muted">{{ project.description or 'No description' }}</p>
+                                
+                                {% if project.status == 'processing' %}
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <small class="text-muted">Processing...</small>
+                                            <small class="text-muted" id="progress-{{ project.id }}">0%</small>
+                                        </div>
+                                        <div class="progress">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                 id="progress-bar-{{ project.id }}" 
+                                                 style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        Created: {{ project.created_at[:10] }}
+                                    </small>
+                                    <a href="{{ url_for('project_detail', project_id=project.id) }}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No Projects Yet</h4>
+                <p class="text-muted mb-4">Create your first project to get started with AI-powered grading.</p>
+                <a href="{{ url_for('create_project') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create First Project
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-refresh processing projects
+document.addEventListener('DOMContentLoaded', function() {
+    const processingProjects = document.querySelectorAll('[id^="progress-"]');
+    
+    if (processingProjects.length > 0) {
+        setInterval(function() {
+            processingProjects.forEach(function(element) {
+                const projectId = element.id.replace('progress-', '');
+                updateProjectStatus(projectId);
+            });
+        }, 5000); // Update every 5 seconds
+    }
+});
+
+function updateProjectStatus(projectId) {
+    fetch(`/project/${projectId}/status`)
+        .then(response => response.json())
+        .then(data => {
+            const progressElement = document.getElementById(`progress-${projectId}`);
+            const progressBarElement = document.getElementById(`progress-bar-${projectId}`);
+            
+            if (progressElement && progressBarElement) {
+                progressElement.textContent = `${data.progress || 0}%`;
+                progressBarElement.style.width = `${data.progress || 0}%`;
+                
+                if (data.status === 'completed') {
+                    location.reload(); // Refresh page when completed
+                }
+            }
+        })
+        .catch(error => console.error('Error updating status:', error));
+}
+</script>
+{% endblock %}

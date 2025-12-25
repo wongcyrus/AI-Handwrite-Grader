@@ -1,0 +1,14 @@
+Flask==3.0.0
+flask-login==0.6.3
+Werkzeug==3.0.1
+azure-data-tables==12.4.4
+azure-storage-blob==12.19.0
+azure-ai-projects==1.0.0b1
+azure-identity==1.15.0
+azure-core==1.29.5
+Pillow==10.1.0
+pdf2image==1.16.3
+openpyxl==3.1.2
+pandas==2.1.4
+python-dotenv==1.0.0
+gunicorn==21.2.0

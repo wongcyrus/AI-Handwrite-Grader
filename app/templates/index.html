@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-robot text-primary me-3"></i>
+                AI Handwriting Grader
+            </h1>
+            <p class="lead text-muted">
+                Transform your grading workflow with AI-powered automation
+            </p>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-upload fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Upload & Process</h5>
+                        <p class="card-text">Upload student assignments and answer keys. AI agents automatically process and annotate.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-eye fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Review & Refine</h5>
+                        <p class="card-text">Review AI annotations and make manual adjustments with our intuitive interface.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-chart-line fa-3x text-warning mb-3"></i>
+                        <h5 class="card-title">Grade & Export</h5>
+                        <p class="card-text">Generate grades, reports, and send results back to students automatically.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-rocket me-2"></i>Get Started
+            </a>
+            <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+            </a>
+        </div>
+
+        <div class="mt-5 p-4 bg-light rounded">
+            <h4 class="mb-3">
+                <i class="fas fa-magic text-primary me-2"></i>
+                Powered by Azure AI Foundry
+            </h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i>OCR Text Extraction</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Layout Analysis</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Question Detection</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i>Answer Extraction</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Quality Validation</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Automated Scoring</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
