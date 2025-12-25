@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+
+{% block title %}Manual Scoring - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-edit"></i> Scoring Progress</h5>
+                </div>
+                <div class="card-body">
+                    <div class="progress mb-3">
+                        <div class="progress-bar" id="progress-bar" 
+                             style="width: {{ (session.reviewed_questions / session.total_questions * 100) | round }}%">
+                            {{ (session.reviewed_questions / session.total_questions * 100) | round }}%
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <p class="mb-1"><strong>Total Questions:</strong> {{ session.total_questions }}</p>
+                        <p class="mb-1"><strong>Reviewed:</strong> 
+                            <span id="reviewed-count">{{ session.reviewed_questions }}</span>
+                        </p>
+                        <p class="mb-1"><strong>Manual Adjustments:</strong> 
+                            <span id="adjusted-count" class="badge bg-warning">{{ session.manually_adjusted }}</span>
+                        </p>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" id="complete-scoring">
+                            <i class="fas fa-check"></i> Complete Scoring
+                        </button>
+                        <button class="btn btn-info" id="view-totals">
+                            <i class="fas fa-calculator"></i> View Student Totals
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6><i class="fas fa-filter"></i> Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-sm btn-outline-primary" onclick="filterQuestions('unreviewed')">
+                            Show Unreviewed
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="filterQuestions('adjusted')">
+                            Show Adjusted
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="filterQuestions('all')">
+                            Show All
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-pencil-alt"></i> Manual Scoring Interface</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="scoring-table">
+                            <thead>
+                                <tr>
+                                    <th>Page</th>
+                                    <th>Question</th>
+                                    <th>Extracted Text</th>
+                                    <th>AI Score</th>
+                                    <th>Manual Score</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for question in session.questions %}
+                                <tr class="question-row" 
+                                    data-question-id="{{ question.question_id }}"
+                                    data-reviewed="{{ question.reviewed | lower }}"
+                                    data-adjusted="{{ (question.score_source == 'manual') | lower }}">
+                                    <td>{{ question.page }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ question.label }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 200px;" 
+                                             title="{{ question.extracted_text }}">
+                                            {{ question.extracted_text }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ question.ai_score }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm" style="width: 120px;">
+                                            <input type="number" class="form-control score-input" 
+                                                   value="{{ question.manual_score }}" 
+                                                   min="0" max="100"
+                                                   data-question-id="{{ question.question_id }}"
+                                                   data-original="{{ question.ai_score }}">
+                                            <span class="input-group-text">/100</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="status-indicators">
+                                            {% if question.reviewed %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check"></i> Reviewed
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-clock"></i> Pending
+                                                </span>
+                                            {% endif %}
+                                            
+                                            {% if question.score_source == 'manual' %}
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-edit"></i> Adjusted
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-success save-score-btn" 
+                                                data-question-id="{{ question.question_id }}">
+                                            <i class="fas fa-save"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary reset-score-btn" 
+                                                data-question-id="{{ question.question_id }}"
+                                                data-original="{{ question.ai_score }}">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Totals Modal -->
+<div class="modal fade" id="totalsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Student Score Totals</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="totals-content">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Save individual score
+    document.querySelectorAll('.save-score-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const questionId = this.dataset.questionId;
+            const scoreInput = document.querySelector(`input[data-question-id="${questionId}"]`);
+            const newScore = parseInt(scoreInput.value);
+            
+            if (isNaN(newScore) || newScore < 0 || newScore > 100) {
+                alert('Please enter a valid score between 0 and 100');
+                return;
+            }
+            
+            saveScore(questionId, newScore);
+        });
+    });
+    
+    // Reset to AI score
+    document.querySelectorAll('.reset-score-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const questionId = this.dataset.questionId;
+            const originalScore = parseInt(this.dataset.original);
+            const scoreInput = document.querySelector(`input[data-question-id="${questionId}"]`);
+            
+            scoreInput.value = originalScore;
+            saveScore(questionId, originalScore);
+        });
+    });
+    
+    // Auto-save on Enter key
+    document.querySelectorAll('.score-input').forEach(input => {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const questionId = this.dataset.questionId;
+                const newScore = parseInt(this.value);
+                
+                if (!isNaN(newScore) && newScore >= 0 && newScore <= 100) {
+                    saveScore(questionId, newScore);
+                }
+            }
+        });
+    });
+    
+    // Complete scoring
+    document.getElementById('complete-scoring').addEventListener('click', function() {
+        if (confirm('Are you sure you want to complete manual scoring? This will finalize all scores.')) {
+            fetch(`/project/{{ project.id }}/manual-scoring/{{ session.session_id }}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Manual scoring completed successfully!');
+                    window.location.href = `/project/{{ project.id }}`;
+                } else {
+                    alert('Error completing scoring: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error completing scoring');
+            });
+        }
+    });
+    
+    // View student totals
+    document.getElementById('view-totals').addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('totalsModal'));
+        modal.show();
+        
+        fetch(`/project/{{ project.id }}/manual-scoring/{{ session.session_id }}/totals`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayStudentTotals(data.student_scores);
+                } else {
+                    document.getElementById('totals-content').innerHTML = 
+                        '<div class="alert alert-danger">Error loading totals: ' + data.error + '</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('totals-content').innerHTML = 
+                    '<div class="alert alert-danger">Error loading totals</div>';
+            });
+    });
+});
+
+function saveScore(questionId, newScore) {
+    fetch(`/project/{{ project.id }}/manual-scoring/{{ session.session_id }}/update`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            question_id: questionId,
+            score: newScore
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update UI
+            updateQuestionStatus(questionId, newScore);
+            updateProgressCounters(data.reviewed_questions, data.manually_adjusted);
+        } else {
+            alert('Error saving score: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving score');
+    });
+}
+
+function updateQuestionStatus(questionId, newScore) {
+    const row = document.querySelector(`tr[data-question-id="${questionId}"]`);
+    const statusCell = row.querySelector('.status-indicators');
+    const scoreInput = row.querySelector('.score-input');
+    const originalScore = parseInt(scoreInput.dataset.original);
+    
+    // Update reviewed status
+    row.dataset.reviewed = 'true';
+    
+    // Update adjusted status
+    const isAdjusted = newScore !== originalScore;
+    row.dataset.adjusted = isAdjusted.toString();
+    
+    // Update status badges
+    let statusHTML = '<span class="badge bg-success"><i class="fas fa-check"></i> Reviewed</span>';
+    if (isAdjusted) {
+        statusHTML += ' <span class="badge bg-warning"><i class="fas fa-edit"></i> Adjusted</span>';
+    }
+    statusCell.innerHTML = statusHTML;
+}
+
+function updateProgressCounters(reviewedCount, adjustedCount) {
+    document.getElementById('reviewed-count').textContent = reviewedCount;
+    document.getElementById('adjusted-count').textContent = adjustedCount;
+    
+    const totalQuestions = {{ session.total_questions }};
+    const progressPercent = Math.round((reviewedCount / totalQuestions) * 100);
+    
+    const progressBar = document.getElementById('progress-bar');
+    progressBar.style.width = progressPercent + '%';
+    progressBar.textContent = progressPercent + '%';
+}
+
+function filterQuestions(filter) {
+    const rows = document.querySelectorAll('.question-row');
+    
+    rows.forEach(row => {
+        let show = false;
+        
+        switch(filter) {
+            case 'unreviewed':
+                show = row.dataset.reviewed === 'false';
+                break;
+            case 'adjusted':
+                show = row.dataset.adjusted === 'true';
+                break;
+            case 'all':
+            default:
+                show = true;
+                break;
+        }
+        
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+function displayStudentTotals(studentScores) {
+    let html = '<div class="table-responsive">';
+    html += '<table class="table table-striped">';
+    html += '<thead><tr><th>Student Page</th><th>Questions</th><th>Total Score</th><th>Percentage</th></tr></thead>';
+    html += '<tbody>';
+    
+    studentScores.forEach(student => {
+        html += `<tr>
+            <td>Page ${student.student_page}</td>
+            <td>${student.question_count}</td>
+            <td>${student.total_score} / ${student.max_possible}</td>
+            <td><span class="badge bg-${student.percentage >= 80 ? 'success' : student.percentage >= 60 ? 'warning' : 'danger'}">${student.percentage}%</span></td>
+        </tr>`;
+    });
+    
+    html += '</tbody></table></div>';
+    
+    document.getElementById('totals-content').innerHTML = html;
+}
+</script>
+{% endblock %}

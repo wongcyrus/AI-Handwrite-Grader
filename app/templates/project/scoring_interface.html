@@ -215,7 +215,13 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     alert('Scoring completed successfully!');
-                    window.location.href = `/project/{{ project.id }}`;
+                    
+                    // Show option to start manual review
+                    if (confirm('AI scoring completed! Would you like to review and adjust scores manually?')) {
+                        window.location.href = `/project/{{ project.id }}/manual-scoring/start/{{ session.session_id }}`;
+                    } else {
+                        window.location.href = `/project/{{ project.id }}`;
+                    }
                 } else {
                     alert('Error completing scoring: ' + data.error);
                 }
