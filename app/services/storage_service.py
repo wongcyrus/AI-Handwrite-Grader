@@ -14,6 +14,9 @@ class StorageService:
     def create_entity(self, table_name, entity):
         """Create entity in table storage"""
         try:
+            # Ensure table exists
+            self._ensure_table_exists(table_name)
+            
             table_client = self.table_client.get_table_client(table_name)
             table_client.create_entity(entity)
             return True
@@ -23,9 +26,17 @@ class StorageService:
             print(f"Error creating entity: {e}")
             return False
     
+    def _ensure_table_exists(self, table_name):
+        """Ensure table exists, create if it doesn't"""
+        try:
+            self.table_client.create_table(table_name)
+        except ResourceExistsError:
+            pass  # Table already exists
+    
     def get_entity(self, table_name, partition_key, row_key):
         """Get entity from table storage"""
         try:
+            self._ensure_table_exists(table_name)
             table_client = self.table_client.get_table_client(table_name)
             return table_client.get_entity(partition_key, row_key)
         except Exception:
@@ -34,6 +45,7 @@ class StorageService:
     def query_entities(self, table_name, filter_query=None):
         """Query entities from table storage"""
         try:
+            self._ensure_table_exists(table_name)
             table_client = self.table_client.get_table_client(table_name)
             if filter_query:
                 return list(table_client.query_entities(filter_query))
@@ -45,6 +57,7 @@ class StorageService:
     def update_entity(self, table_name, entity):
         """Update entity in table storage"""
         try:
+            self._ensure_table_exists(table_name)
             table_client = self.table_client.get_table_client(table_name)
             table_client.update_entity(entity, mode='merge')
             return True
