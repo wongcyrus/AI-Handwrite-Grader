@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}Post-Processing - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-tasks"></i> Processing Steps</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-file-excel text-success"></i>
+                                <span class="ms-2">Generate Excel Report</span>
+                            </div>
+                            {% if session.reports_generated > 0 %}
+                                <span class="badge bg-success">✓</span>
+                            {% else %}
+                                <button class="btn btn-sm btn-primary" id="generate-report-btn">
+                                    Generate
+                                </button>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-file-pdf text-danger"></i>
+                                <span class="ms-2">Create Annotated PDFs</span>
+                            </div>
+                            {% if session.pdfs_created > 0 %}
+                                <span class="badge bg-success">✓</span>
+                            {% else %}
+                                <button class="btn btn-sm btn-primary" id="create-pdfs-btn" 
+                                        {% if session.reports_generated == 0 %}disabled{% endif %}>
+                                    Create
+                                </button>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-check-circle text-info"></i>
+                                <span class="ms-2">Complete Processing</span>
+                            </div>
+                            {% if session.status == 'completed' %}
+                                <span class="badge bg-success">✓</span>
+                            {% else %}
+                                <button class="btn btn-sm btn-success" id="complete-btn"
+                                        {% if session.pdfs_created == 0 %}disabled{% endif %}>
+                                    Complete
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="progress">
+                            <div class="progress-bar" style="width: {{ ((session.reports_generated + session.pdfs_created + (1 if session.status == 'completed' else 0)) / 3 * 100) | round }}%">
+                                {{ ((session.reports_generated + session.pdfs_created + (1 if session.status == 'completed' else 0)) / 3 * 100) | round }}%
+                            </div>
+                        </div>
+                        <small class="text-muted">Overall Progress</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar"></i> Results Summary</h5>
+                </div>
+                <div class="card-body">
+                    {% if session.report_data %}
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h4>{{ session.report_data | length }}</h4>
+                                        <small>Total Students</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h4>{{ session.reports_generated }}</h4>
+                                        <small>Reports Generated</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body text-center">
+                                        <h4>{{ session.pdfs_created }}</h4>
+                                        <small>PDFs Created</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body text-center">
+                                        <h4>{{ (session.report_data | map(attribute='Percentage') | sum / session.report_data | length) | round(1) if session.report_data else 0 }}%</h4>
+                                        <small>Average Score</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if session.report_url %}
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-download"></i> Excel Report Ready</h6>
+                            <p class="mb-2">Your score report has been generated and is ready for download.</p>
+                            <a href="{{ session.report_url }}" class="btn btn-success btn-sm" target="_blank">
+                                <i class="fas fa-download"></i> Download Excel Report
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Page</th>
+                                        <th>Name</th>
+                                        <th>ID</th>
+                                        <th>Class</th>
+                                        <th>Total Score</th>
+                                        <th>Percentage</th>
+                                        <th>Grade</th>
+                                        {% if session.pdfs_created > 0 %}
+                                        <th>PDF</th>
+                                        {% endif %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for student in session.report_data %}
+                                    <tr>
+                                        <td>{{ student.Student_Page }}</td>
+                                        <td>{{ student.Name }}</td>
+                                        <td>{{ student.ID }}</td>
+                                        <td>{{ student.Class }}</td>
+                                        <td>{{ student.Total_Score }} / {{ student.Max_Possible }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if student.Percentage >= 80 else 'warning' if student.Percentage >= 60 else 'danger' }}">
+                                                {{ student.Percentage }}%
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if student.Percentage >= 90 %}A
+                                            {% elif student.Percentage >= 80 %}B
+                                            {% elif student.Percentage >= 70 %}C
+                                            {% elif student.Percentage >= 60 %}D
+                                            {% else %}F
+                                            {% endif %}
+                                        </td>
+                                        {% if session.pdfs_created > 0 %}
+                                        <td>
+                                            {% set pdf = session.pdf_urls | selectattr('student_page', 'equalto', student.Student_Page) | first %}
+                                            {% if pdf %}
+                                                <a href="{{ pdf.pdf_url }}" class="btn btn-sm btn-outline-danger" target="_blank">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                        {% endif %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted">
+                            <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                            <p>Generate the Excel report to view results summary</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Generate Excel Report
+    document.getElementById('generate-report-btn')?.addEventListener('click', function() {
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        
+        fetch(`/project/{{ project.id }}/post-processing/{{ session.session_id }}/generate-report`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Excel report generated successfully! ${data.total_students} students processed.`);
+                location.reload();
+            } else {
+                alert('Error generating report: ' + data.error);
+                this.disabled = false;
+                this.innerHTML = 'Generate';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error generating report');
+            this.disabled = false;
+            this.innerHTML = 'Generate';
+        });
+    });
+    
+    // Create Annotated PDFs
+    document.getElementById('create-pdfs-btn')?.addEventListener('click', function() {
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+        
+        fetch(`/project/{{ project.id }}/post-processing/{{ session.session_id }}/create-pdfs`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`${data.pdfs_created} annotated PDFs created successfully!`);
+                location.reload();
+            } else {
+                alert('Error creating PDFs: ' + data.error);
+                this.disabled = false;
+                this.innerHTML = 'Create';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error creating PDFs');
+            this.disabled = false;
+            this.innerHTML = 'Create';
+        });
+    });
+    
+    // Complete Processing
+    document.getElementById('complete-btn')?.addEventListener('click', function() {
+        if (confirm('Are you sure you want to complete post-processing? This will finalize all reports and PDFs.')) {
+            fetch(`/project/{{ project.id }}/post-processing/{{ session.session_id }}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Post-processing completed successfully!');
+                    window.location.href = `/project/{{ project.id }}`;
+                } else {
+                    alert('Error completing post-processing: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error completing post-processing');
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -226,7 +226,13 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     alert('Manual scoring completed successfully!');
-                    window.location.href = `/project/{{ project.id }}`;
+                    
+                    // Show option to start post-processing
+                    if (confirm('Manual scoring completed! Would you like to generate reports and PDFs now?')) {
+                        window.location.href = `/project/{{ project.id }}/post-processing/start/{{ session.session_id }}`;
+                    } else {
+                        window.location.href = `/project/{{ project.id }}`;
+                    }
                 } else {
                     alert('Error completing scoring: ' + data.error);
                 }
