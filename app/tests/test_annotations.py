@@ -8,9 +8,11 @@ class TestAnnotationRoutes:
     def client(self):
         """Create test client"""
         from app import app
+        
         app.config['TESTING'] = True
         app.config['SECRET_KEY'] = 'test-secret'
         app.config['WTF_CSRF_ENABLED'] = False
+        app.config['LOGIN_DISABLED'] = True
         
         with app.test_client() as client:
             with app.app_context():
@@ -36,20 +38,21 @@ class TestAnnotationRoutes:
 
     def test_review_annotations_success(self, client, mock_user, mock_project):
         """Test successful annotation review page load"""
-        with patch('flask_login.current_user', mock_user):
-            with patch('models.project.Project.get_by_id', return_value=mock_project):
-                with patch('app.get_project_annotations') as mock_get_annotations:
-                    mock_get_annotations.return_value = [
-                        {
-                            'page': '1',
-                            'data': {'questions': []},
-                            'confidence': 0.9,
-                            'created_at': '2023-01-01T00:00:00'
-                        }
-                    ]
-                    
-                    response = client.get('/project/test-project-123/annotations')
-                    assert response.status_code == 200
+        with patch('flask_login.login_required', lambda f: f):  # Disable login_required
+            with patch('flask_login.current_user', mock_user):
+                with patch('models.project.Project.get_by_id', return_value=mock_project):
+                    with patch('app.get_project_annotations') as mock_get_annotations:
+                        mock_get_annotations.return_value = [
+                            {
+                                'page': '1',
+                                'data': {'questions': []},
+                                'confidence': 0.9,
+                                'created_at': '2023-01-01T00:00:00'
+                            }
+                        ]
+                        
+                        response = client.get('/project/test-project-123/annotations')
+                        assert response.status_code == 200
 
     def test_review_annotations_project_not_found(self, client, mock_user):
         """Test annotation review with non-existent project"""
@@ -81,50 +84,53 @@ class TestAnnotationRoutes:
             }
         }
         
-        with patch('flask_login.current_user', mock_user):
-            with patch('models.project.Project.get_by_id', return_value=mock_project):
-                with patch('app.save_project_annotations') as mock_save:
-                    with patch.object(mock_project, 'update_status') as mock_update:
-                        with patch('services.storage_service.StorageService.log_audit') as mock_audit:
-                            response = client.post(
-                                '/project/test-project-123/annotations',
-                                json=annotations_data,
-                                content_type='application/json'
-                            )
-                            
-                            assert response.status_code == 200
-                            data = response.get_json()
-                            assert data['success'] is True
-                            
-                            mock_save.assert_called_once()
-                            mock_update.assert_called_once_with('scored')
-                            mock_audit.assert_called_once()
+        with patch('flask_login.login_required', lambda f: f):  # Disable login_required
+            with patch('flask_login.current_user', mock_user):
+                with patch('models.project.Project.get_by_id', return_value=mock_project):
+                    with patch('app.save_project_annotations') as mock_save:
+                        with patch.object(mock_project, 'update_status') as mock_update:
+                            with patch('services.storage_service.StorageService.log_audit') as mock_audit:
+                                response = client.post(
+                                    '/project/test-project-123/annotations',
+                                    json=annotations_data,
+                                    content_type='application/json'
+                                )
+                                
+                                assert response.status_code == 200
+                                data = response.get_json()
+                                assert data['success'] is True
+                                
+                                mock_save.assert_called_once()
+                                mock_update.assert_called_once_with('scored')
+                                mock_audit.assert_called_once()
 
     def test_save_annotations_project_not_found(self, client, mock_user):
         """Test annotation saving with non-existent project"""
-        with patch('flask_login.current_user', mock_user):
-            with patch('models.project.Project.get_by_id', return_value=None):
-                response = client.post(
-                    '/project/nonexistent/annotations',
-                    json={},
-                    content_type='application/json'
-                )
-                assert response.status_code == 404
+        with patch('flask_login.login_required', lambda f: f):  # Disable login_required
+            with patch('flask_login.current_user', mock_user):
+                with patch('models.project.Project.get_by_id', return_value=None):
+                    response = client.post(
+                        '/project/nonexistent/annotations',
+                        json={},
+                        content_type='application/json'
+                    )
+                    assert response.status_code == 404
 
     def test_save_annotations_exception(self, client, mock_user, mock_project):
         """Test annotation saving with exception"""
-        with patch('flask_login.current_user', mock_user):
-            with patch('models.project.Project.get_by_id', return_value=mock_project):
-                with patch('app.save_project_annotations', side_effect=Exception("Save error")):
-                    response = client.post(
-                        '/project/test-project-123/annotations',
-                        json={'1': {'questions': []}},
-                        content_type='application/json'
-                    )
-                    
-                    assert response.status_code == 500
-                    data = response.get_json()
-                    assert 'error' in data
+        with patch('flask_login.login_required', lambda f: f):  # Disable login_required
+            with patch('flask_login.current_user', mock_user):
+                with patch('models.project.Project.get_by_id', return_value=mock_project):
+                    with patch('app.save_project_annotations', side_effect=Exception("Save error")):
+                        response = client.post(
+                            '/project/test-project-123/annotations',
+                            json={'1': {'questions': []}},
+                            content_type='application/json'
+                        )
+                        
+                        assert response.status_code == 500
+                        data = response.get_json()
+                        assert 'error' in data
 
 class TestAnnotationHelpers:
     @pytest.fixture
@@ -193,6 +199,7 @@ class TestAnnotationHelpers:
         
         with patch('flask_login.current_user') as mock_user:
             mock_user.id = 'test-user'
+            mock_user.is_authenticated = True
             
             save_project_annotations('test-project', annotations_data)
             
@@ -290,17 +297,18 @@ class TestProjectStatusUpdates:
             'message': 'Processing complete'
         }
         
-        with patch('flask_login.current_user', mock_user):
-            with patch('models.project.Project.get_by_id', return_value=mock_project):
-                with patch('services.ai_foundry_service.AIFoundryService.get_job_status', return_value=mock_status):
-                    from flask import Flask
-                    app = Flask(__name__)
-                    
-                    with app.test_request_context():
-                        result = project_status('test-project')
+        with patch('flask_login.login_required', lambda f: f):  # Disable login_required
+            with patch('flask_login.current_user', mock_user):
+                with patch('models.project.Project.get_by_id', return_value=mock_project):
+                    with patch('services.ai_foundry_service.AIFoundryService.get_job_status', return_value=mock_status):
+                        from flask import Flask
+                        app = Flask(__name__)
                         
-                        # Should update project status to annotated
-                        mock_project.update_status.assert_called_once_with('annotated')
+                        with app.test_request_context():
+                            result = project_status('test-project')
+                            
+                            # Should update project status to annotated
+                            mock_project.update_status.assert_called_once_with('annotated')
 
 class TestAnnotationDataStructure:
     def test_annotation_json_structure(self):
