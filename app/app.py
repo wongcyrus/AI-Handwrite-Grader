@@ -13,6 +13,7 @@ from models.user import User
 from models.project import Project
 from routes.pdf_processing import register_pdf_routes
 from routes.question_annotation import register_annotation_routes
+from routes.ai_scoring import register_scoring_routes
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
@@ -314,6 +315,9 @@ register_pdf_routes(app)
 
 # Register annotation routes
 register_annotation_routes(app)
+
+# Register AI scoring routes
+register_scoring_routes(app)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

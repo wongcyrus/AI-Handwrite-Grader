@@ -288,7 +288,13 @@ class AnnotationTool {
             .then(data => {
                 if (data.success) {
                     alert(`Annotation completed! Total annotations: ${data.total_annotations}`);
-                    window.location.href = `/project/{{ project.id }}`;
+                    
+                    // Show option to start AI scoring
+                    if (confirm('Annotation completed! Would you like to start AI scoring now?')) {
+                        window.location.href = `/project/{{ project.id }}/scoring/start/{{ session.session_id }}`;
+                    } else {
+                        window.location.href = `/project/{{ project.id }}`;
+                    }
                 } else {
                     alert('Error completing annotation: ' + data.error);
                 }

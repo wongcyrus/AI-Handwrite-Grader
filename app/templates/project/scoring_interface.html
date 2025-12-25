@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}AI Scoring Results - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-cogs"></i> Scoring Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Confidence Threshold:</label>
+                        <div class="input-group">
+                            <input type="range" class="form-range" id="confidence-slider" 
+                                   min="0.1" max="0.99" step="0.01" 
+                                   value="{{ session.confidence_threshold }}">
+                            <span class="input-group-text" id="threshold-value">
+                                {{ (session.confidence_threshold * 100) | round }}%
+                            </span>
+                        </div>
+                        <small class="text-muted">
+                            Scores below this threshold will be flagged for review
+                        </small>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Summary</h6>
+                        <p class="mb-1"><strong>Total Questions:</strong> {{ session.total_questions }}</p>
+                        <p class="mb-1"><strong>Low Confidence:</strong> 
+                            <span id="low-confidence-count" class="badge bg-warning">
+                                {{ session.low_confidence_count }}
+                            </span>
+                        </p>
+                        <p class="mb-0"><strong>Needs Review:</strong> 
+                            <span id="review-percentage" class="badge bg-danger">
+                                {{ ((session.low_confidence_count / session.total_questions * 100) | round) if session.total_questions > 0 else 0 }}%
+                            </span>
+                        </p>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" id="apply-threshold">
+                            <i class="fas fa-sync"></i> Apply Threshold
+                        </button>
+                        <button class="btn btn-success" id="complete-scoring">
+                            <i class="fas fa-check"></i> Complete Scoring
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6><i class="fas fa-filter"></i> Filter Questions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="show-all" checked>
+                        <label class="form-check-label" for="show-all">Show All</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="show-low-confidence">
+                        <label class="form-check-label" for="show-low-confidence">Low Confidence Only</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="show-high-confidence">
+                        <label class="form-check-label" for="show-high-confidence">High Confidence Only</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-robot"></i> AI Scoring Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="scoring-table">
+                            <thead>
+                                <tr>
+                                    <th>Page</th>
+                                    <th>Question</th>
+                                    <th>Extracted Text</th>
+                                    <th>AI Score</th>
+                                    <th>Confidence</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for question in session.questions %}
+                                <tr class="question-row" 
+                                    data-confidence="{{ question.confidence }}"
+                                    data-needs-review="{{ question.needs_review | lower }}">
+                                    <td>{{ question.page }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ question.label }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 200px;" 
+                                             title="{{ question.extracted_text }}">
+                                            {{ question.extracted_text }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if question.ai_score >= 80 else 'warning' if question.ai_score >= 60 else 'danger' }}">
+                                            {{ question.ai_score }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="width: 80px;">
+                                            <div class="progress-bar bg-{{ 'success' if question.confidence >= session.confidence_threshold else 'warning' }}" 
+                                                 style="width: {{ (question.confidence * 100) | round }}%">
+                                                {{ (question.confidence * 100) | round }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if question.needs_review %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-exclamation-triangle"></i> Review
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> OK
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                onclick="viewQuestion('{{ question.question_id }}')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if question.needs_review %}
+                                        <button class="btn btn-sm btn-outline-warning" 
+                                                onclick="reviewQuestion('{{ question.question_id }}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confidenceSlider = document.getElementById('confidence-slider');
+    const thresholdValue = document.getElementById('threshold-value');
+    const applyButton = document.getElementById('apply-threshold');
+    const completeButton = document.getElementById('complete-scoring');
+    
+    // Update threshold display
+    confidenceSlider.addEventListener('input', function() {
+        const value = Math.round(this.value * 100);
+        thresholdValue.textContent = value + '%';
+    });
+    
+    // Apply new threshold
+    applyButton.addEventListener('click', function() {
+        const newThreshold = parseFloat(confidenceSlider.value);
+        
+        fetch(`/project/{{ project.id }}/scoring/{{ session.session_id }}/threshold`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                threshold: newThreshold
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update UI with new counts
+                document.getElementById('low-confidence-count').textContent = data.low_confidence_count;
+                const percentage = Math.round((data.low_confidence_count / data.total_questions) * 100);
+                document.getElementById('review-percentage').textContent = percentage + '%';
+                
+                // Update table rows
+                updateTableRows(newThreshold);
+                
+                alert('Confidence threshold updated successfully!');
+            } else {
+                alert('Error updating threshold: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error updating threshold');
+        });
+    });
+    
+    // Complete scoring
+    completeButton.addEventListener('click', function() {
+        if (confirm('Are you sure you want to complete the scoring? This will mark the project as scored.')) {
+            fetch(`/project/{{ project.id }}/scoring/{{ session.session_id }}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Scoring completed successfully!');
+                    window.location.href = `/project/{{ project.id }}`;
+                } else {
+                    alert('Error completing scoring: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error completing scoring');
+            });
+        }
+    });
+    
+    // Filter functionality
+    const showAll = document.getElementById('show-all');
+    const showLowConfidence = document.getElementById('show-low-confidence');
+    const showHighConfidence = document.getElementById('show-high-confidence');
+    
+    function updateFilters() {
+        const rows = document.querySelectorAll('.question-row');
+        
+        rows.forEach(row => {
+            const needsReview = row.dataset.needsReview === 'true';
+            let show = false;
+            
+            if (showAll.checked) {
+                show = true;
+            } else {
+                if (showLowConfidence.checked && needsReview) show = true;
+                if (showHighConfidence.checked && !needsReview) show = true;
+            }
+            
+            row.style.display = show ? '' : 'none';
+        });
+    }
+    
+    showAll.addEventListener('change', function() {
+        if (this.checked) {
+            showLowConfidence.checked = false;
+            showHighConfidence.checked = false;
+        }
+        updateFilters();
+    });
+    
+    showLowConfidence.addEventListener('change', function() {
+        if (this.checked) showAll.checked = false;
+        updateFilters();
+    });
+    
+    showHighConfidence.addEventListener('change', function() {
+        if (this.checked) showAll.checked = false;
+        updateFilters();
+    });
+    
+    function updateTableRows(newThreshold) {
+        const rows = document.querySelectorAll('.question-row');
+        
+        rows.forEach(row => {
+            const confidence = parseFloat(row.dataset.confidence);
+            const needsReview = confidence < newThreshold;
+            
+            row.dataset.needsReview = needsReview.toString();
+            
+            // Update status badge
+            const statusCell = row.cells[5];
+            if (needsReview) {
+                statusCell.innerHTML = '<span class="badge bg-warning"><i class="fas fa-exclamation-triangle"></i> Review</span>';
+            } else {
+                statusCell.innerHTML = '<span class="badge bg-success"><i class="fas fa-check"></i> OK</span>';
+            }
+            
+            // Update progress bar color
+            const progressBar = row.querySelector('.progress-bar');
+            progressBar.className = `progress-bar bg-${needsReview ? 'warning' : 'success'}`;
+        });
+        
+        updateFilters();
+    }
+});
+
+function viewQuestion(questionId) {
+    // Placeholder for viewing question details
+    alert('View question: ' + questionId);
+}
+
+function reviewQuestion(questionId) {
+    // Placeholder for manual review interface
+    alert('Review question: ' + questionId);
+}
+</script>
+{% endblock %}
