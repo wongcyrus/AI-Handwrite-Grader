@@ -260,7 +260,13 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     alert('Post-processing completed successfully!');
-                    window.location.href = `/project/{{ project.id }}`;
+                    
+                    // Show option to start email distribution
+                    if (confirm('Post-processing completed! Would you like to send results to students via email?')) {
+                        window.location.href = `/project/{{ project.id }}/email/start/{{ session.session_id }}`;
+                    } else {
+                        window.location.href = `/project/{{ project.id }}`;
+                    }
                 } else {
                     alert('Error completing post-processing: ' + data.error);
                 }

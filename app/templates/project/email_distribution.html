@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Email Distribution - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-paper-plane"></i> Email Status</h5>
+                </div>
+                <div class="card-body">
+                    {% if session.status == 'created' %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            Ready to send emails to students
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button class="btn btn-primary" id="send-emails-btn">
+                                <i class="fas fa-paper-plane"></i> Send All Emails
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body">
+                                        <h4>{{ session.emails_sent }}</h4>
+                                        <small>Sent</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-danger text-white">
+                                    <div class="card-body">
+                                        <h4>{{ session.emails_failed }}</h4>
+                                        <small>Failed</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <div class="progress">
+                                <div class="progress-bar bg-success" 
+                                     style="width: {{ (session.emails_sent / (session.emails_sent + session.emails_failed) * 100) | round if (session.emails_sent + session.emails_failed) > 0 else 0 }}%">
+                                    {{ (session.emails_sent / (session.emails_sent + session.emails_failed) * 100) | round if (session.emails_sent + session.emails_failed) > 0 else 0 }}%
+                                </div>
+                            </div>
+                            <small class="text-muted">Success Rate</small>
+                        </div>
+                        
+                        {% if session.status == 'completed' %}
+                            <div class="alert alert-success mt-3">
+                                <i class="fas fa-check-circle"></i>
+                                All emails processed successfully!
+                            </div>
+                        {% elif session.status == 'partial' %}
+                            <div class="alert alert-warning mt-3">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Some emails failed to send. Check the results below.
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6><i class="fas fa-envelope"></i> Email Preview</h6>
+                </div>
+                <div class="card-body">
+                    <div id="email-preview">
+                        <div class="mb-2">
+                            <strong>Subject:</strong>
+                            <div class="text-muted" id="preview-subject">Your Assignment Results - John Doe</div>
+                        </div>
+                        <div>
+                            <strong>Body:</strong>
+                            <div class="text-muted small" id="preview-body">
+                                Dear John Doe,<br><br>
+                                Your assignment has been graded...<br><br>
+                                Total Score: 85<br>
+                                Percentage: 85%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-list"></i> Email Results</h5>
+                </div>
+                <div class="card-body">
+                    {% if session.email_results %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Email</th>
+                                        <th>Status</th>
+                                        <th>Subject</th>
+                                        <th>Error</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for result in session.email_results %}
+                                    <tr>
+                                        <td>{{ result.student_name }}</td>
+                                        <td>{{ result.student_email or 'N/A' }}</td>
+                                        <td>
+                                            {% if result.success %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check"></i> Sent
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times"></i> Failed
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="text-truncate" style="max-width: 200px;" 
+                                                 title="{{ result.subject or '' }}">
+                                                {{ result.subject or 'N/A' }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if result.error %}
+                                                <span class="text-danger small">{{ result.error }}</span>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted">
+                            <i class="fas fa-envelope fa-3x mb-3"></i>
+                            <p>No emails sent yet. Click "Send All Emails" to begin distribution.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load email template from sessionStorage
+    const emailTemplate = JSON.parse(sessionStorage.getItem('emailTemplate') || '{}');
+    
+    if (emailTemplate.subject) {
+        document.getElementById('preview-subject').textContent = emailTemplate.subject.replace('{student_name}', 'John Doe');
+    }
+    
+    if (emailTemplate.body) {
+        const previewBody = emailTemplate.body
+            .replace('{student_name}', 'John Doe')
+            .replace('{total_score}', '85')
+            .replace('{percentage}', '85')
+            .replace(/\n/g, '<br>');
+        document.getElementById('preview-body').innerHTML = previewBody;
+    }
+    
+    // Send emails
+    document.getElementById('send-emails-btn')?.addEventListener('click', function() {
+        if (!confirm('Are you sure you want to send emails to all students? This action cannot be undone.')) {
+            return;
+        }
+        
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending Emails...';
+        
+        fetch(`/project/{{ project.id }}/email/{{ session.session_id }}/send`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email_template: emailTemplate
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Email distribution completed!\nSent: ${data.emails_sent}\nFailed: ${data.emails_failed}`);
+                location.reload();
+            } else {
+                alert('Error sending emails: ' + data.error);
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-paper-plane"></i> Send All Emails';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error sending emails');
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-paper-plane"></i> Send All Emails';
+        });
+    });
+});
+</script>
+{% endblock %}

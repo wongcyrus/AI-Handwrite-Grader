@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Email Setup - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-envelope"></i> Email Distribution Setup</h4>
+                </div>
+                <div class="card-body">
+                    <form id="email-setup-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>SMTP Configuration</h5>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                    <div class="form-text">Your email address for sending</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">App Password</label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                    <div class="form-text">Use app-specific password for Gmail</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="smtp_server" class="form-label">SMTP Server</label>
+                                    <input type="text" class="form-control" id="smtp_server" name="smtp_server" 
+                                           value="smtp.gmail.com" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="smtp_port" class="form-label">SMTP Port</label>
+                                    <input type="number" class="form-control" id="smtp_port" name="smtp_port" 
+                                           value="587" required>
+                                </div>
+                                
+                                <button type="button" class="btn btn-outline-primary" id="test-smtp-btn">
+                                    <i class="fas fa-plug"></i> Test Connection
+                                </button>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5>Email Template</h5>
+                                <div class="mb-3">
+                                    <label for="subject" class="form-label">Subject</label>
+                                    <input type="text" class="form-control" id="subject" name="subject" 
+                                           value="Your Assignment Results - {student_name}" required>
+                                    <div class="form-text">Use {student_name} for personalization</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="body" class="form-label">Email Body</label>
+                                    <textarea class="form-control" id="body" name="body" rows="8" required>Dear {student_name},
+
+Your assignment has been graded. Here are your results:
+
+Total Score: {total_score}
+Percentage: {percentage}%
+
+Please find your annotated assignment attached.
+
+Best regards,
+Your Instructor</textarea>
+                                    <div class="form-text">Available variables: {student_name}, {total_score}, {percentage}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-secondary" onclick="history.back()">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-envelope"></i> Setup Email Distribution
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6><i class="fas fa-info-circle"></i> Setup Instructions</h6>
+                </div>
+                <div class="card-body">
+                    <h6>For Gmail Users:</h6>
+                    <ol class="small">
+                        <li>Enable 2-factor authentication on your Google account</li>
+                        <li>Generate an app-specific password for this application</li>
+                        <li>Use your Gmail address and the app password above</li>
+                        <li>Keep the default SMTP settings (smtp.gmail.com:587)</li>
+                    </ol>
+                    
+                    <h6>Email Template Variables:</h6>
+                    <ul class="small">
+                        <li><code>{student_name}</code> - Student's name from the assignment</li>
+                        <li><code>{total_score}</code> - Student's total score</li>
+                        <li><code>{percentage}</code> - Student's percentage grade</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Test SMTP connection
+    document.getElementById('test-smtp-btn').addEventListener('click', function() {
+        const smtpConfig = {
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+            smtp_server: document.getElementById('smtp_server').value,
+            smtp_port: document.getElementById('smtp_port').value
+        };
+        
+        if (!smtpConfig.email || !smtpConfig.password) {
+            alert('Please enter email and password first');
+            return;
+        }
+        
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+        
+        fetch(`/project/{{ project.id }}/email/test-smtp`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                smtp_config: smtpConfig
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('SMTP connection test successful!');
+            } else {
+                alert('SMTP connection failed: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error testing SMTP connection');
+        })
+        .finally(() => {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-plug"></i> Test Connection';
+        });
+    });
+    
+    // Setup email distribution
+    document.getElementById('email-setup-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const smtpConfig = {
+            email: formData.get('email'),
+            password: formData.get('password'),
+            smtp_server: formData.get('smtp_server'),
+            smtp_port: formData.get('smtp_port')
+        };
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Setting up...';
+        
+        fetch(`/project/{{ project.id }}/email/create`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                post_session_id: '{{ post_session_id }}',
+                smtp_config: smtpConfig
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Store email template in sessionStorage for next step
+                sessionStorage.setItem('emailTemplate', JSON.stringify({
+                    subject: formData.get('subject'),
+                    body: formData.get('body')
+                }));
+                
+                window.location.href = `/project/{{ project.id }}/email/${data.session_id}`;
+            } else {
+                alert('Error setting up email distribution: ' + data.error);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-envelope"></i> Setup Email Distribution';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error setting up email distribution');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-envelope"></i> Setup Email Distribution';
+        });
+    });
+});
+</script>
+{% endblock %}
