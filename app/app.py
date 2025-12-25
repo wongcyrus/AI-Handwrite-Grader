@@ -4,11 +4,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
 import json
+import asyncio
+import threading
 from datetime import datetime
 import uuid
 
 from services.storage_service import StorageService
 from services.ai_foundry_service import AIFoundryService
+from services.async_job_processor import AsyncJobProcessor
 from models.user import User
 from models.project import Project
 from routes.pdf_processing import register_pdf_routes
@@ -18,6 +21,9 @@ from routes.manual_scoring import register_manual_scoring_routes
 from routes.post_processing import register_post_processing_routes
 from routes.email_distribution import register_email_routes
 
+# Import async job routes
+from routes.async_jobs import *
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
@@ -25,6 +31,16 @@ app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
 # Initialize services
 storage_service = StorageService()
 ai_foundry_service = AIFoundryService()
+job_processor = AsyncJobProcessor(ai_foundry_service)
+
+# Start background job processor
+def start_background_processor():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(job_processor.start_processor())
+
+processor_thread = threading.Thread(target=start_background_processor, daemon=True)
+processor_thread.start()
 
 # Flask-Login setup
 login_manager = LoginManager()

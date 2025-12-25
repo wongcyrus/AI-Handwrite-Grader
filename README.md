@@ -1,4 +1,39 @@
 # AI-Handwriting-Grader
+
+## Quick Start by Role
+- **System Admin**: See [Deployment Guide](DEPLOYMENT.md) and [Connected Agents Setup](CONNECTED_AGENTS.md)
+- **Educators**: See [User Guide - Educator Section](USER_GUIDE.md#2-educatorteacher)  
+- **Teaching Assistants**: See [User Guide - TA Section](USER_GUIDE.md#3-teaching-assistantgrader)
+- **Students**: See [User Guide - Student Section](USER_GUIDE.md#4-student)
+
+## Documentation
+- [Deployment and Local Development](DEPLOYMENT.md) - Setup and deployment instructions
+- [Connected Agents Implementation](CONNECTED_AGENTS.md) - Technical architecture
+- [User Guide](USER_GUIDE.md) - Role-based usage instructions
+- [Processing Architecture](PROCESSING_ARCHITECTURE.md) - Where processing time occurs
+
+## Quick Local Development
+```bash
+# Setup and start
+./setup-dev.sh
+cp app/.env.template app/.env  # Edit with your Azure credentials
+python deploy_agents.py       # Deploy Connected Agents (one-time)
+cd app && python app.py       # Start development server
+```
+
+## Quick Production Deployment
+```bash
+# Docker
+docker build -t ai-handwrite-grader .
+docker run -p 5000:5000 --env-file app/.env ai-handwrite-grader
+
+# Azure App Service
+az webapp create --resource-group rg --plan plan --name app --runtime "PYTHON|3.9"
+# Configure app settings and deploy code
+```
+
+## Legacy Files
+Original notebook-based implementation has been moved to [`deprecated/`](deprecated/) folder for reference only. The current system uses Connected Agents architecture with microservices.
 As an educator, grading tests and assignments is a challenging and time-consuming task. The process involves several steps, such as collecting all completed scripts, reviewing the standard answers and marking for each question, assigning marks, and repeating the process for each student. Once all questions have been marked, the total score for each student must be calculated and entered into a spreadsheet. Finally, the scored scripts are returned to the students.
 
 The current process is quite tedious and involves several unnecessary steps, such as flipping through papers, calculating total marks, and manually entering them into a spreadsheet. Reviewing standard answers and grading each question individually is also quite inefficient, as educators often have to repeat the process until they can memorize the marking scheme. Furthermore, this approach can sometimes result in unfair grading, as educators may not review all student answers for each question at the same time. To address this issue, some educators opt to score each question individually, but this requires flipping through the script multiple times, adding to the workload.
