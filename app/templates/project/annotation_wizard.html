@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+
+{% block title %}Question Annotation - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-list"></i> Annotation Progress</h5>
+                </div>
+                <div class="card-body">
+                    <div class="progress mb-3">
+                        <div class="progress-bar" id="overall-progress" style="width: 0%">0%</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Current Page:</label>
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary" id="prev-page" disabled>
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <input type="number" class="form-control text-center" id="current-page" 
+                                   value="1" min="1" max="{{ session.total_pages }}">
+                            <button class="btn btn-outline-secondary" id="next-page">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">of {{ session.total_pages }} pages</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Question Label:</label>
+                        <select class="form-select" id="question-label">
+                            <option value="NAME">NAME</option>
+                            <option value="ID">ID</option>
+                            <option value="CLASS">CLASS</option>
+                            <option value="Q1">Q1</option>
+                            <option value="Q2">Q2</option>
+                            <option value="Q3">Q3</option>
+                            <option value="Q4">Q4</option>
+                            <option value="Q5">Q5</option>
+                            <option value="Q6">Q6</option>
+                            <option value="Q7">Q7</option>
+                            <option value="Q8">Q8</option>
+                            <option value="Q9">Q9</option>
+                            <option value="Q10">Q10</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" id="save-page">
+                            <i class="fas fa-save"></i> Save Page
+                        </button>
+                        <button class="btn btn-success" id="complete-annotation">
+                            <i class="fas fa-check"></i> Complete Annotation
+                        </button>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <strong>Instructions:</strong><br>
+                            1. Click and drag to create bounding boxes<br>
+                            2. Select appropriate label for each box<br>
+                            3. Save each page before moving to next<br>
+                            4. Complete when all pages are annotated
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-image"></i> Page <span id="page-number">1</span> Annotation</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="annotation-container" style="position: relative; overflow: auto; max-height: 80vh;">
+                        <canvas id="annotation-canvas" style="cursor: crosshair;"></canvas>
+                        <img id="page-image" style="display: block; max-width: 100%;" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+class AnnotationTool {
+    constructor() {
+        this.canvas = document.getElementById('annotation-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.image = document.getElementById('page-image');
+        this.annotations = [];
+        this.currentAnnotation = null;
+        this.isDrawing = false;
+        this.startX = 0;
+        this.startY = 0;
+        
+        this.setupEventListeners();
+        this.loadPage(1);
+    }
+    
+    setupEventListeners() {
+        // Canvas events
+        this.canvas.addEventListener('mousedown', this.startDrawing.bind(this));
+        this.canvas.addEventListener('mousemove', this.draw.bind(this));
+        this.canvas.addEventListener('mouseup', this.stopDrawing.bind(this));
+        
+        // UI events
+        document.getElementById('prev-page').addEventListener('click', () => this.changePage(-1));
+        document.getElementById('next-page').addEventListener('click', () => this.changePage(1));
+        document.getElementById('current-page').addEventListener('change', (e) => this.loadPage(parseInt(e.target.value)));
+        document.getElementById('save-page').addEventListener('click', () => this.savePage());
+        document.getElementById('complete-annotation').addEventListener('click', () => this.completeAnnotation());
+        
+        // Image load event
+        this.image.addEventListener('load', () => this.setupCanvas());
+    }
+    
+    setupCanvas() {
+        const rect = this.image.getBoundingClientRect();
+        this.canvas.width = this.image.naturalWidth;
+        this.canvas.height = this.image.naturalHeight;
+        this.canvas.style.width = this.image.offsetWidth + 'px';
+        this.canvas.style.height = this.image.offsetHeight + 'px';
+        this.canvas.style.position = 'absolute';
+        this.canvas.style.top = '0';
+        this.canvas.style.left = '0';
+        
+        this.redrawAnnotations();
+    }
+    
+    startDrawing(e) {
+        this.isDrawing = true;
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        
+        this.startX = (e.clientX - rect.left) * scaleX;
+        this.startY = (e.clientY - rect.top) * scaleY;
+    }
+    
+    draw(e) {
+        if (!this.isDrawing) return;
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        
+        const currentX = (e.clientX - rect.left) * scaleX;
+        const currentY = (e.clientY - rect.top) * scaleY;
+        
+        this.redrawAnnotations();
+        
+        // Draw current rectangle
+        this.ctx.strokeStyle = '#007bff';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(
+            this.startX,
+            this.startY,
+            currentX - this.startX,
+            currentY - this.startY
+        );
+    }
+    
+    stopDrawing(e) {
+        if (!this.isDrawing) return;
+        this.isDrawing = false;
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        
+        const endX = (e.clientX - rect.left) * scaleX;
+        const endY = (e.clientY - rect.top) * scaleY;
+        
+        const width = Math.abs(endX - this.startX);
+        const height = Math.abs(endY - this.startY);
+        
+        if (width > 10 && height > 10) {
+            const annotation = {
+                x: Math.min(this.startX, endX),
+                y: Math.min(this.startY, endY),
+                width: width,
+                height: height,
+                label: document.getElementById('question-label').value
+            };
+            
+            this.annotations.push(annotation);
+            this.redrawAnnotations();
+        }
+    }
+    
+    redrawAnnotations() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.annotations.forEach((annotation, index) => {
+            // Draw rectangle
+            this.ctx.strokeStyle = '#28a745';
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(annotation.x, annotation.y, annotation.width, annotation.height);
+            
+            // Draw label
+            this.ctx.fillStyle = '#28a745';
+            this.ctx.font = '16px Arial';
+            this.ctx.fillText(annotation.label, annotation.x, annotation.y - 5);
+        });
+    }
+    
+    loadPage(pageNum) {
+        const imageUrls = {{ image_urls | tojsonfilter }};
+        const pageImage = imageUrls.find(img => img.page === pageNum);
+        
+        if (pageImage) {
+            this.image.src = pageImage.url;
+            document.getElementById('page-number').textContent = pageNum;
+            document.getElementById('current-page').value = pageNum;
+            
+            // Update navigation buttons
+            document.getElementById('prev-page').disabled = pageNum <= 1;
+            document.getElementById('next-page').disabled = pageNum >= {{ session.total_pages }};
+            
+            // Load existing annotations for this page
+            this.loadPageAnnotations(pageNum);
+        }
+    }
+    
+    loadPageAnnotations(pageNum) {
+        fetch(`/project/{{ project.id }}/annotation/{{ session.session_id }}/page/${pageNum}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.annotations = data.annotations || [];
+                    this.redrawAnnotations();
+                }
+            })
+            .catch(error => console.error('Error loading annotations:', error));
+    }
+    
+    changePage(delta) {
+        const currentPage = parseInt(document.getElementById('current-page').value);
+        const newPage = currentPage + delta;
+        
+        if (newPage >= 1 && newPage <= {{ session.total_pages }}) {
+            this.loadPage(newPage);
+        }
+    }
+    
+    savePage() {
+        const currentPage = parseInt(document.getElementById('current-page').value);
+        
+        fetch(`/project/{{ project.id }}/annotation/{{ session.session_id }}/page/${currentPage}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                annotations: this.annotations
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Page ${currentPage} saved successfully! ${data.annotation_count} annotations saved.`);
+                this.updateProgress();
+            } else {
+                alert('Error saving page: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error saving page:', error);
+            alert('Error saving page');
+        });
+    }
+    
+    completeAnnotation() {
+        if (confirm('Are you sure you want to complete the annotation? This will mark the session as finished.')) {
+            fetch(`/project/{{ project.id }}/annotation/{{ session.session_id }}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Annotation completed! Total annotations: ${data.total_annotations}`);
+                    window.location.href = `/project/{{ project.id }}`;
+                } else {
+                    alert('Error completing annotation: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error completing annotation:', error);
+                alert('Error completing annotation');
+            });
+        }
+    }
+    
+    updateProgress() {
+        // Simple progress calculation - could be enhanced
+        const currentPage = parseInt(document.getElementById('current-page').value);
+        const progress = (currentPage / {{ session.total_pages }}) * 100;
+        
+        const progressBar = document.getElementById('overall-progress');
+        progressBar.style.width = progress + '%';
+        progressBar.textContent = Math.round(progress) + '%';
+    }
+}
+
+// Initialize annotation tool when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    new AnnotationTool();
+});
+</script>
+{% endblock %}

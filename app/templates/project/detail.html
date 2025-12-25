@@ -56,6 +56,26 @@
             </div>
         {% endif %}
 
+        {% if project.status == 'uploaded' %}
+            <!-- PDF Processing Step -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-image me-2"></i>Step 1: PDF Processing
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Files uploaded successfully! Now convert the PDF to images for annotation.
+                    </p>
+                    <a href="{{ url_for('pdf_upload_page', project_id=project.id) }}" class="btn btn-primary">
+                        <i class="fas fa-file-image me-2"></i>Process PDF to Images
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+
         {% if project.status == 'processing' %}
             <!-- Processing Status -->
             <div class="card mb-4">
