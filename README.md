@@ -30,6 +30,13 @@ python -m pytest tests/ -v    # All tests
 python -m pytest -m "not integration"  # Unit tests only
 ```
 
+## Undeploy Infrastructure
+```bash
+# Clean undeploy (handles nested resources)
+./cleanup-nested-resources.sh
+cd terraform && terraform destroy -auto-approve
+```
+
 ## Quick Production Deployment
 ```bash
 # Docker

@@ -17,6 +17,11 @@ resource "azurerm_ai_services" "ai_services" {
   identity {
     type = "SystemAssigned"
   }
+
+  lifecycle {
+    # Prevent destroy issues with nested resources
+    create_before_destroy = false
+  }
   
   tags = var.tags
 }
@@ -95,6 +100,20 @@ resource "null_resource" "deploy_agents" {
       source venv/bin/activate
       export AZURE_AI_PROJECT_ENDPOINT="https://${azurerm_ai_services.ai_services.custom_subdomain_name}.services.ai.azure.com/api/projects/${var.project_name}-${var.environment}-project"
       python deploy_agents_tf.py
+    EOT
+  }
+
+  # Cleanup nested resources before destroy
+  provisioner "local-exec" {
+    when = destroy
+    command = <<-EOT
+      # Delete any nested AI projects/deployments before destroying parent resources
+      az resource list --resource-group "${var.resource_group_name}" --resource-type "Microsoft.CognitiveServices/accounts/projects" --query "[].id" -o tsv | while read project_id; do
+        if [ ! -z "$project_id" ]; then
+          echo "Deleting nested project: $project_id"
+          az resource delete --ids "$project_id" || true
+        fi
+      done
     EOT
   }
 
