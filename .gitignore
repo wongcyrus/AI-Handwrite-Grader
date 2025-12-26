@@ -143,6 +143,11 @@ smtp.config
 marking_form/*
 venv/*
 
+# Environment files with secrets
+.env
+app/.env
+*.env
+
 # Terraform
 *.tfstate
 *.tfstate.*
