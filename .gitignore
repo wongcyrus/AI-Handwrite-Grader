@@ -153,3 +153,4 @@ app/.env
 *.tfstate.*
 .terraform/
 .terraform.lock.hcl
+app/.env.test
