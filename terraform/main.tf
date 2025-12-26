@@ -38,7 +38,7 @@ variable "project_name" {
 variable "location" {
   description = "Azure region"
   type        = string
-  default     = "East US"
+  default     = "East US 2"
 }
 
 variable "environment" {
@@ -102,6 +102,7 @@ module "ai_foundry" {
   project_name        = var.project_name
   environment         = var.environment
   resource_group_name = module.resource_group.name
+  resource_group_id   = module.resource_group.id
   location           = var.location
   storage_account_id  = module.storage.storage_account_id
   key_vault_id        = module.key_vault.key_vault_id

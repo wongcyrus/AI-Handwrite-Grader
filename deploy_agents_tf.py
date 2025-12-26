@@ -12,17 +12,10 @@ from azure.identity import DefaultAzureCredential
 def deploy_agents():
     """Deploy all agents to Azure AI Foundry."""
     
-    # Get project endpoint from environment or use default
-    project_endpoint = os.getenv('AZURE_AI_PROJECT_ENDPOINT')
-    if not project_endpoint:
-        project_endpoint = "https://aihandwritegraderdevai.services.ai.azure.com/api/projects/ai-handwrite-grader-dev-project"
-        print(f"Using default endpoint: {project_endpoint}")
-    else:
-        print(f"Using endpoint from environment: {project_endpoint}")
-    
     try:
+        # Use correct AI Foundry project endpoint format
         client = AIProjectClient(
-            endpoint=project_endpoint,
+            endpoint="https://aihandwritegraderdevai.services.ai.azure.com/api/projects/ai-handwrite-grader-dev-proj",
             credential=DefaultAzureCredential()
         )
         
