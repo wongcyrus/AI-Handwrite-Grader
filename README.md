@@ -12,29 +12,46 @@
 - [User Guide](USER_GUIDE.md) - Role-based usage instructions
 - [Processing Architecture](PROCESSING_ARCHITECTURE.md) - Where processing time occurs
 
-## Quick Local Development
+## Quick Deployment (One Command)
+```bash
+# Complete deployment with auto-configuration
+./deploy.sh
+
+# Access your application at the provided URL
+# Environment files (.env) are automatically configured
+```
+
+## Agent Management
+```bash
+# Update agent prompts/configurations
+./update-agents.sh
+
+# Recreate all agents (for major changes)
+./recreate-agents.sh
+```
+
+## Local Development
 ```bash
 # Setup and start
 ./setup-dev.sh
-cp app/.env.template app/.env  # Edit with your Azure credentials
-
-# Deploy infrastructure AND agents (one command)
-cd terraform && terraform apply -auto-approve
+# Environment files auto-created after deployment
 
 # Start development server
-cd ../app && python app.py
+cd app && python app.py
 
-# Run tests
-./run-tests.sh                # Interactive test runner
-python -m pytest tests/ -v    # All tests
-python -m pytest -m "not integration"  # Unit tests only
+# Run tests with live services
+./run-tests.sh
 ```
+
+## Environment Management
+- **Secure**: `.env` files auto-generated from Azure resources
+- **Never committed**: All credentials excluded from version control
+- **Auto-update**: Fresh deployment creates new environment files
+- **Single source**: Agent configurations in `deploy_agents_tf.py`
 
 ## Undeploy Infrastructure
 ```bash
-# Clean undeploy (handles nested resources)
-./cleanup-nested-resources.sh
-cd terraform && terraform destroy -auto-approve
+./undeploy.sh  # Complete cleanup including nested resources
 ```
 
 ## Quick Production Deployment

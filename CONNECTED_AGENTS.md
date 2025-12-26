@@ -1,14 +1,42 @@
 # Azure AI Foundry Connected Agents Implementation
 
-## Agent Testing Status
+## Agent Management
 
-### Deployed Agents (Production Ready)
+### Single Source Configuration
+All agent configurations (prompts, descriptions, instructions) are managed in one file:
+- **File**: `deploy_agents_tf.py` (lines 25-45)
+- **Configuration**: `agents_config` array
+
+### Update Agent Prompts
+1. **Edit** `deploy_agents_tf.py`:
+```python
+{
+    'name': 'Handwriting Analyzer',
+    'description': 'Your updated description',
+    'instructions': '''Your new prompt instructions here...''',
+    'env_var': 'HANDWRITING_AGENT_ID'
+}
+```
+
+2. **Apply updates**:
+```bash
+./update-agents.sh     # Quick update (recommended)
+./recreate-agents.sh   # Full recreation for major changes
+```
+
+### Environment Auto-Update
+- `.env` files auto-generated from Terraform outputs
+- Agent IDs automatically populated after deployment
+- No manual credential management required
+- Fresh checkout + `./deploy.sh` = fully configured system
+
+## Deployed Agents (Live Production)
 All agents successfully deployed and tested:
 
-- ✅ **Handwriting Analyzer** (`asst_Av3aip2JnvJTo7fklAgOuI7U`) - Deployed and functional
-- ✅ **Content Evaluator** (`asst_mt3BGFH65bgLKwbriRac3p4a`) - Deployed and functional  
-- ✅ **Scoring Coordinator** (`asst_Q33fOG1BIaW5IgBsYRmsx4H2`) - Deployed and functional
-- ✅ **Main Orchestrator** (`asst_8ssQtzn01xVd6GqJV0XX79Iu`) - Deployed and functional
+- ✅ **Handwriting Analyzer** (`asst_7dPN3cHaAxjl5712Xm0EwaNI`) - Live and functional
+- ✅ **Content Evaluator** (`asst_XnSPMfZv0vXcrA0svhBfgVrk`) - Live and functional  
+- ✅ **Scoring Coordinator** (`asst_kqD4ic5Cq3HZeDuFtClOQGcL`) - Live and functional
+- ✅ **Main Orchestrator** (`asst_wA5KIyptGvd59gzAgRxurQlS`) - Live and functional
 
 ### Test Coverage
 - ✅ **Unit Tests** - Service initialization, agent creation, job handling
