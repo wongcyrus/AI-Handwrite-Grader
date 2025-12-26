@@ -3,6 +3,11 @@ output "storage_account_name" {
   value       = azurerm_storage_account.main.name
 }
 
+output "storage_account_id" {
+  description = "ID of the storage account"
+  value       = azurerm_storage_account.main.id
+}
+
 output "connection_string" {
   description = "Connection string for the storage account"
   value       = azurerm_storage_account.main.primary_connection_string

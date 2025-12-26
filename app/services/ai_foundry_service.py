@@ -17,7 +17,7 @@ class ConnectedAgent:
         self.name = name
         self.description = description
         self.instructions = instructions
-        self.id = f"agent_{name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        self.id = None  # Will be set from deployed agent ID
 
 class AIFoundryService:
     """
@@ -27,15 +27,23 @@ class AIFoundryService:
     
     def __init__(self):
         """Initialize the AI Foundry service with Connected Agents architecture."""
+        self.project_endpoint = os.getenv('AZURE_AI_PROJECT_ENDPOINT')
+        self.model_deployment_name = os.getenv('AZURE_AI_MODEL_DEPLOYMENT_NAME', 'gpt-4')
+        self.max_retries = int(os.getenv('AGENT_MAX_RETRIES', '3'))
+        self.retry_delay = int(os.getenv('AGENT_RETRY_DELAY', '1'))
+        
+        # Initialize as disabled if no credentials
+        self.enabled = False
+        self.client = None
+        self.openai_client = None
+        self.connected_agents = {}
+        self.main_agent = None
+        
+        if not self.project_endpoint:
+            logger.warning("AZURE_AI_PROJECT_ENDPOINT not set - AI features disabled")
+            return
+            
         try:
-            self.project_endpoint = os.getenv('AZURE_AI_PROJECT_ENDPOINT')
-            self.model_deployment_name = os.getenv('AZURE_AI_MODEL_DEPLOYMENT_NAME', 'gpt-4')
-            self.max_retries = int(os.getenv('AGENT_MAX_RETRIES', '3'))
-            self.retry_delay = int(os.getenv('AGENT_RETRY_DELAY', '1'))
-            
-            if not self.project_endpoint:
-                raise ValueError("AZURE_AI_PROJECT_ENDPOINT environment variable is required")
-            
             # Initialize the AI Project Client
             self.client = AIProjectClient(
                 endpoint=self.project_endpoint,
@@ -46,20 +54,27 @@ class AIFoundryService:
             self.openai_client = self.client.get_openai_client()
             
             # Initialize connected agents
-            self.connected_agents = {}
-            self.main_agent = None
             self._initialize_connected_agents()
+            self.enabled = True
             
             logger.info("AI Foundry Connected Agents service initialized successfully")
             
         except Exception as e:
-            logger.error(f"Failed to initialize AI Foundry service: {str(e)}")
-            raise
+            logger.error(f"Failed to initialize AI Foundry service: {str(e)} - AI features disabled")
+            self.enabled = False
 
     def _initialize_connected_agents(self):
-        """Initialize or retrieve existing connected agents."""
+        """Initialize connected agents using pre-deployed agent IDs."""
         try:
-            # Use pre-deployed agent IDs from environment variables
+            # Use pre-deployed agent IDs from environment variables (required)
+            handwriting_id = os.getenv('HANDWRITING_AGENT_ID')
+            content_id = os.getenv('CONTENT_AGENT_ID') 
+            scoring_id = os.getenv('SCORING_AGENT_ID')
+            main_id = os.getenv('MAIN_AGENT_ID')
+            
+            if not all([handwriting_id, content_id, scoring_id, main_id]):
+                raise ValueError("Missing required agent IDs. Run deploy_agents.py first.")
+            
             self.connected_agents = {
                 'handwriting_analyzer': ConnectedAgent(
                     name="handwriting_analyzer",
@@ -98,13 +113,10 @@ class AIFoundryService:
                 )
             }
             
-            # Override with deployed agent IDs if available
-            if os.getenv('HANDWRITING_AGENT_ID'):
-                self.connected_agents['handwriting_analyzer'].id = os.getenv('HANDWRITING_AGENT_ID')
-            if os.getenv('CONTENT_AGENT_ID'):
-                self.connected_agents['content_evaluator'].id = os.getenv('CONTENT_AGENT_ID')
-            if os.getenv('SCORING_AGENT_ID'):
-                self.connected_agents['scoring_coordinator'].id = os.getenv('SCORING_AGENT_ID')
+            # Set the deployed agent IDs
+            self.connected_agents['handwriting_analyzer'].id = handwriting_id
+            self.connected_agents['content_evaluator'].id = content_id
+            self.connected_agents['scoring_coordinator'].id = scoring_id
             
             self.main_agent = ConnectedAgent(
                 name="grading_orchestrator",
@@ -120,10 +132,9 @@ class AIFoundryService:
                 8. Always provide clear, actionable results with proper attribution"""
             )
             
-            if os.getenv('MAIN_AGENT_ID'):
-                self.main_agent.id = os.getenv('MAIN_AGENT_ID')
+            self.main_agent.id = main_id
             
-            logger.info("Connected agents initialized successfully")
+            logger.info(f"Connected agents initialized with deployed IDs: {handwriting_id}, {content_id}, {scoring_id}, {main_id}")
             
         except Exception as e:
             logger.error(f"Failed to initialize connected agents: {str(e)}")
@@ -172,6 +183,9 @@ class AIFoundryService:
 
     def start_annotation_job(self, project_id: str, pdf_url: str, excel_url: str) -> str:
         """Start annotation job asynchronously and return job ID immediately."""
+        if not self.enabled:
+            raise ValueError("AI service is not available - missing Azure credentials")
+            
         try:
             job_id = f"{project_id}_job_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             
@@ -261,6 +275,9 @@ class AIFoundryService:
 
     def process_handwriting_analysis(self, image_data: bytes, question_id: str) -> str:
         """Queue handwriting analysis job and return job ID immediately."""
+        if not self.enabled:
+            raise ValueError("AI service is not available - missing Azure credentials")
+            
         try:
             job_id = f"handwriting_{question_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             
@@ -274,6 +291,9 @@ class AIFoundryService:
 
     def evaluate_answer(self, student_answer: str, standard_answer: str, rubric: Dict[str, Any]) -> str:
         """Queue answer evaluation job and return job ID immediately."""
+        if not self.enabled:
+            raise ValueError("AI service is not available - missing Azure credentials")
+            
         try:
             job_id = f"evaluation_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             

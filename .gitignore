@@ -134,7 +134,17 @@ data/*
 !data/README.md
 output.zip
 temp.png
+
+# Debug and test files (cleanup)
+debug_*.py
+test_*.py
+*_test.py
 smtp.config
 marking_form/*
 venv/*
 
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl

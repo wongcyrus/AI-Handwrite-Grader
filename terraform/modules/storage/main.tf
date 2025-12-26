@@ -1,5 +1,5 @@
 resource "azurerm_storage_account" "main" {
-  name                     = "${replace(var.project_name, "-", "")}${var.environment}storage"
+  name                     = "aigrader${var.environment}${substr(md5("${var.project_name}-${var.environment}"), 0, 8)}"
   resource_group_name      = var.resource_group_name
   location                = var.location
   account_tier            = "Standard"
@@ -15,20 +15,20 @@ resource "azurerm_storage_account" "main" {
 }
 
 resource "azurerm_storage_container" "pdfs" {
-  name                  = "pdfs"
-  storage_account_name  = azurerm_storage_account.main.name
+  name                 = "pdfs"
+  storage_account_id   = azurerm_storage_account.main.id
   container_access_type = "private"
 }
 
 resource "azurerm_storage_container" "images" {
-  name                  = "images"
-  storage_account_name  = azurerm_storage_account.main.name
+  name                 = "images"
+  storage_account_id   = azurerm_storage_account.main.id
   container_access_type = "private"
 }
 
 resource "azurerm_storage_container" "results" {
-  name                  = "results"
-  storage_account_name  = azurerm_storage_account.main.name
+  name                 = "results"
+  storage_account_id   = azurerm_storage_account.main.id
   container_access_type = "private"
 }
 

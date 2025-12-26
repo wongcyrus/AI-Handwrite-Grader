@@ -18,16 +18,6 @@ variable "resource_group_name" {
   type        = string
 }
 
-variable "storage_account_id" {
-  description = "ID of the storage account"
-  type        = string
-}
-
-variable "key_vault_id" {
-  description = "ID of the key vault"
-  type        = string
-}
-
 variable "tags" {
   description = "Resource tags"
   type        = map(string)

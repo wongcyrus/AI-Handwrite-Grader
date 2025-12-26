@@ -1,5 +1,31 @@
 # Deployment and Local Development Guide
 
+## Testing
+
+### Test Structure
+- `tests/test_agents.py` - Unit tests for AI Foundry service (fast, mocked)
+- `tests/test_agent_integration.py` - Integration tests with real Azure agents
+- `pytest.ini` - Test configuration with markers
+
+### Running Tests
+```bash
+# Interactive test runner
+./run-tests.sh
+
+# Unit tests only (fast)
+python -m pytest tests/test_agents.py -v
+
+# All tests including integration
+python -m pytest tests/ -v
+
+# Skip integration tests
+python -m pytest -m "not integration"
+```
+
+### Test Categories
+- **Unit Tests** (`@pytest.mark.unit`) - Service logic with mocks
+- **Integration Tests** (`@pytest.mark.integration`) - Real deployed agents
+
 ## Local Development
 
 ### Prerequisites
@@ -132,7 +158,7 @@ terraform init
 # Plan deployment
 terraform plan -var="project_name=ai-grader" -var="location=eastus"
 
-# Deploy infrastructure
+# Deploy infrastructure and agents (one command)
 terraform apply
 ```
 

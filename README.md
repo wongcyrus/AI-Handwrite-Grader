@@ -17,8 +17,17 @@
 # Setup and start
 ./setup-dev.sh
 cp app/.env.template app/.env  # Edit with your Azure credentials
-python deploy_agents.py       # Deploy Connected Agents (one-time)
-cd app && python app.py       # Start development server
+
+# Deploy infrastructure AND agents (one command)
+cd terraform && terraform apply -auto-approve
+
+# Start development server
+cd ../app && python app.py
+
+# Run tests
+./run-tests.sh                # Interactive test runner
+python -m pytest tests/ -v    # All tests
+python -m pytest -m "not integration"  # Unit tests only
 ```
 
 ## Quick Production Deployment
