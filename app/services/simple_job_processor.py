@@ -26,7 +26,7 @@ class AsyncJobProcessor:
                 'type': job_type,
                 'status': 'queued',
                 'progress': 0,
-                'created_at': datetime.utcnow().isoformat(),
+                'created_at': datetime.now(datetime.UTC).isoformat(),
                 'kwargs': kwargs
             }
             

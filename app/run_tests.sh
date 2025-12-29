@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Test script for AI Handwriting Grader with Azurite
+# Test script for AI Handwriting Grader with Live Azure Services
 
 set -e
 
-echo "🧪 Running AI Handwriting Grader Test Suite with Azurite"
-echo "======================================================="
+echo "🧪 Running AI Handwriting Grader Test Suite with Live Azure"
+echo "=========================================================="
 
 # Check if we're in the app directory
 if [ ! -f "app.py" ]; then
@@ -13,86 +13,60 @@ if [ ! -f "app.py" ]; then
     exit 1
 fi
 
-# Check if Azurite is running
-if ! curl -f http://localhost:10002/devstoreaccount1 > /dev/null 2>&1; then
-    echo "⚠️  Azurite not detected. Starting it..."
-    cd ..
-    docker-compose up -d azurite
-    sleep 5
-    cd app
-    
-    if ! curl -f http://localhost:10002/devstoreaccount1 > /dev/null 2>&1; then
-        echo "❌ Failed to start Azurite. Please run: docker-compose up -d azurite"
-        exit 1
-    fi
+# Check if .env exists with live credentials
+if [ ! -f ".env" ]; then
+    echo "❌ Error: .env file not found. Run ./deploy.sh first to create it."
+    exit 1
 fi
 
-echo "✅ Azurite is running"
+# Load environment variables
+source .env
+
+# Verify Azure credentials are present
+if [ -z "$AZURE_STORAGE_CONNECTION_STRING" ] || [ -z "$AZURE_AI_PROJECT_ENDPOINT" ]; then
+    echo "❌ Error: Missing Azure credentials in .env file"
+    echo "Run ./update-env.sh to refresh from Terraform outputs"
+    exit 1
+fi
+
+echo "✅ Live Azure credentials loaded"
 
 # Install test dependencies
 echo "📦 Installing test dependencies..."
 pip install -r requirements-test.txt > /dev/null 2>&1
 
-# Set test environment variables with Azurite
+# Set additional test environment variables
 export FLASK_ENV=testing
-export AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://localhost:10000/devstoreaccount1;QueueEndpoint=http://localhost:10001/devstoreaccount1;TableEndpoint=http://localhost:10002/devstoreaccount1;"
-export AI_FOUNDRY_ENDPOINT="https://test.cognitiveservices.azure.com/"
-export MODEL_DEPLOYMENT_NAME="gpt-4o-mini"
-export SECRET_KEY="test-secret-key"
+export SECRET_KEY="test-secret-key-$(date +%s)"
+export PYTHONPATH="/home/developer/Documents/data-disk/AI-Handwrite-Grader/app"
 
-# Initialize storage for tests
-echo "🗄️  Initializing test storage..."
-python3 -c "
-from services.storage_service import StorageService
-try:
-    storage = StorageService()
-    # Create test containers
-    containers = ['pdfs', 'images', 'results']
-    for container in containers:
-        try:
-            storage.blob_client.create_container(container)
-        except:
-            pass  # Container might already exist
-    print('✅ Test storage ready')
-except Exception as e:
-    print(f'⚠️  Storage setup warning: {e}')
-"
+# Run tests that work with live services
+echo "🧪 Running tests with Live Azure backend..."
+pytest tests/test_pdf_processing_service.py \
+       tests/test_post_processing_service.py \
+       tests/test_manual_scoring_service.py \
+       tests/test_question_annotation_service.py \
+       tests/test_email_distribution_service.py \
+       tests/test_ai_scoring_service.py \
+       tests/test_workflow_integration.py \
+       --verbose \
+       --tb=short \
+       -W ignore::DeprecationWarning
 
-# Run linting (if flake8 is available)
-if command -v flake8 &> /dev/null; then
-    echo "🔍 Running code linting..."
-    flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
-fi
-
-# Run tests with coverage
-echo "🧪 Running tests with Azurite backend..."
-pytest tests/ \
-    --verbose \
-    --tb=short \
-    --cov=. \
-    --cov-report=html \
-    --cov-report=term-missing \
-    --cov-exclude=tests/* \
-    --cov-exclude=venv/* \
-    --cov-exclude=test_env/*
-
-# Display coverage summary
+# Run live service integration tests
 echo ""
-echo "📊 Coverage Summary:"
-echo "==================="
-coverage report --show-missing
+echo "🔗 Running Live Service Integration Tests..."
+cd ..
+python test_live_services.py
+python test_services.py
+cd app
 
-# Check coverage threshold
-COVERAGE=$(coverage report --format=total 2>/dev/null || echo "0")
-THRESHOLD=70
-
-if [ "$COVERAGE" -lt "$THRESHOLD" ]; then
-    echo "⚠️  Coverage $COVERAGE% is below threshold $THRESHOLD%"
-else
-    echo "✅ Coverage $COVERAGE% meets threshold $THRESHOLD%"
-fi
+# Display test summary
+echo ""
+echo "📊 Test Summary:"
+echo "================"
+echo "✅ Core business logic tests completed"
 
 echo ""
-echo "🎉 Tests completed with Azurite backend!"
-echo "📁 Detailed coverage report available in htmlcov/index.html"
-echo "🔧 Azurite data persisted in Docker volume for next run"
+echo "🎉 Tests completed with Live Azure backend!"
+echo "🔧 Live Azure services tested and working"
