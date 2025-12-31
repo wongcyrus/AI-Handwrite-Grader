@@ -13,7 +13,7 @@
 		"cpus": 4
 	},
 	"waitFor": "onCreateCommand",
-	"onCreateCommand": "sudo apt-get update && sudo apt-get install -y libjpeg-dev zlib1g-dev libtiff-dev libfreetype6-dev liblcms2-dev libwebp-dev libharfbuzz-dev libfribidi-dev libxcb1-dev",
+	"onCreateCommand": "sudo apt-get update && sudo apt-get install -y libjpeg-dev zlib1g-dev libtiff-dev libfreetype6-dev liblcms2-dev libwebp-dev libharfbuzz-dev libfribidi-dev libxcb1-dev poppler-utils",
 	"updateContentCommand": "python -m pip install -r requirements-dev.txt",
 	"postCreateCommand": "",
 	"customizations": {

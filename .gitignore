@@ -137,4 +137,7 @@ temp.png
 smtp.config
 marking_form/*
 venv/*
+.env
+*-key.json
+service-account-key.json
 

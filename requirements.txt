@@ -163,3 +163,5 @@ Werkzeug==3.0.1
 widgetsnbextension==4.0.8
 yarl==1.9.4
 boto3
+python-dotenv
+google-genai
