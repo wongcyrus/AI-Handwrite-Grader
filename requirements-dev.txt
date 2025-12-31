@@ -102,7 +102,7 @@ parso
 pdf2image
 pexpect
 pickleshare
-Pillow==9.5.0
+Pillow
 pip
 platformdirs
 prompt-toolkit
