@@ -65,8 +65,8 @@
 <body>
 	<header>
         <a href="../../index.html">Back to the question list</a>        
-        <h1>Scoring forms for {{studentsScriptFileName}} - {{question}} (Answer: {{standardAnswer if standardAnswer is not none}})</h1>
-       
+        <h1>Scoring forms for {{studentsScriptFileName}} - {{question}}</h1>
+        <p>Answer: {{standardAnswer if standardAnswer is not none}}</p>       
 	</header>	
 	<section> 
         <div id="dialog" title="Large Image">
@@ -115,8 +115,8 @@
             <a class="toggle-vis" data-column="0" href="#">Image</a> -
             <a class="toggle-vis" data-column="1" href="#">Answer</a> - 
             <a class="toggle-vis" data-column="2" href="#">Mark</a> - 
-            <a class="toggle-vis" data-column="3" href="#">Similarity</a> - 
-            <a class="toggle-vis" data-column="4" href="#">Confidence Score</a>        
+            <a class="toggle-vis" data-column="3" href="#">Similarity</a> -
+            <a class="toggle-vis" data-column="4" href="#">Reasoning</a>     
         </div>
         <div>
             <p>If your type in the mark, it will be locked. To unlock, click on the mark below the mark input.</p>
@@ -129,14 +129,14 @@
                     <th>Answer</th>
                     <th>Mark</th>                      
                     <th>Similarity</th>
-                    <th>Confidence Score</th>
+                    <th>Reasoning</th>                  
                   </tr>
                 </thead>
                 <tbody>
 {% for index, row in dataTable.iterrows() -%}
                   <tr>          
                     <td> 
-                        <div id="crop-{{row["page"]}}-container" {% if row["Confidence"]|float == 0.0 %} class="imputation" {% endif %}>
+                        <div id="crop-{{row["page"]}}-container" >
                             <img src="../../{{row["Image"]}}" 
                                  id="crop-{{row["page"]}}" 
                                  class="answerImage crop-{{row["page"]}}"
@@ -152,13 +152,12 @@
                     <td>
                         <input type="number" id="mark-{{row["page"]}}" min="0" value="{{row["Mark"]}}" max="1" step="1" 
                                class="mark" 
-                               data-similarity="{{[row["Similarity"],0]|max}}"
-                               data-confidence="{{row["Confidence"]}}"
+                               data-similarity="{{[row["Similarity"],0]|max}}"                              
                                required /> 
                         <span id="mark-{{row["page"]}}-locked" class="lock"></span>
                     </td>
                     <td>{{'%0.2f'| format([row["Similarity"],0]|max|float)}}</td>
-                    <td>{{'%0.2f'| format(row["Confidence"]|float)}}</td>
+                    <td>{{row.get("Reasoning", "N/A")}}</td>                    
                   </tr>      
 {% endfor %} 
                 </tbody>

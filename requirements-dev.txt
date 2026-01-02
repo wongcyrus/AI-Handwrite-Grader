@@ -69,6 +69,7 @@ langsmith
 lazy_loader
 lit
 mammoth
+html2text
 MarkupSafe
 marshmallow
 matplotlib

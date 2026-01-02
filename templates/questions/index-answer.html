@@ -58,8 +58,7 @@
         <div>
             Show/Hide column:
             <a class="toggle-vis" data-column="0" href="#">Image</a> -
-            <a class="toggle-vis" data-column="1" href="#">Answer</a> - 
-            <a class="toggle-vis" data-column="4" href="#">Confidence Score</a>        
+            <a class="toggle-vis" data-column="1" href="#">Answer</a>       
         </div>
         <div>
             <p>If your type in the mark, it will be locked. To unlock, click on the mark below the mark input.</p>
@@ -69,8 +68,7 @@
                 <thead>
                   <tr>
                     <th>Image</th>
-                    <th>Answer</th> 
-                    <th>Confidence Score</th>
+                    <th>Answer</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -93,12 +91,10 @@
                         <input type="text" id="mark-{{row["page"]}}"
                                class="mark" 
                                data-similarity="{{row["Similarity"]}}"
-                               data-confidence="{{row["Confidence"]}}"
                                value="{{row["Answer"]}}"
                                required /> 
                         <span id="mark-{{row["page"]}}-locked" class="lock"></span>
                     </td>
-                    <td>{{'%0.2f'| format(row["Confidence"]|float)}}</td>
                   </tr>      
 {% endfor %} 
                 </tbody>
