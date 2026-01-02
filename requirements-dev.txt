@@ -165,3 +165,9 @@ Werkzeug
 wheel
 widgetsnbextension
 yarl
+python-docx
+reportlab
+pypdf
+boto3
+python-dotenv
+google-genai
