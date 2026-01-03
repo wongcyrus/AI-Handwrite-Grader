@@ -75,8 +75,8 @@
 	<header>
         <a href="../../index.html">Back to the question list</a>        
         <h1>Scoring forms for {{studentsScriptFileName}} - {{question}}</h1>
-        <p>Answer: {{standardAnswer if standardAnswer is not none}}</p>       
-	</header>	
+        <p>Answer: {{standardAnswer|markdown|safe if standardAnswer is not none}}</p>       
+	</header>
 	<section> 
         <div id="dialog" title="Large Image">
             <img id="largeImage" src="" style="vertical-align: top; padding: 0px 10px 10px 2px; width: 100%; height: 100%" />
