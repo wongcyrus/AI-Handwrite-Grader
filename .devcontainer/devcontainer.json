@@ -2,7 +2,7 @@
 	"image": "mcr.microsoft.com/devcontainers/base:ubuntu",
 	"features": {		
 		"ghcr.io/devcontainers/features/python:1": {
-			"version": "latest"
+			"version": "3.14.2"
 		}
 	},
 	"hostRequirements": {
@@ -10,7 +10,7 @@
 	},
 	"waitFor": "onCreateCommand",
 	"onCreateCommand": "sudo apt-get update && sudo apt-get install -y libjpeg-dev zlib1g-dev libtiff-dev libfreetype6-dev liblcms2-dev libwebp-dev libharfbuzz-dev libfribidi-dev libxcb1-dev poppler-utils ffmpeg libsm6 libxext6 libreoffice-writer",
-	"updateContentCommand": "python -m pip install -r requirements-dev.txt",
+	"updateContentCommand": "python -m pip install -r requirements.txt",
 	"postCreateCommand": "",
 	"customizations": {
 		"codespaces": {
