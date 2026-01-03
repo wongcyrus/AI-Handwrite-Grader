@@ -42,8 +42,8 @@ ipykernel
 # Formatting & Output
 Jinja2
 termcolor
+markdown
 
 # Utilities
 requests
 tqdm
-google-genai
