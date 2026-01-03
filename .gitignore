@@ -140,4 +140,4 @@ venv/*
 .env
 *-key.json
 service-account-key.json
-
+cache/*
