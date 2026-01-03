@@ -33,6 +33,7 @@
 
     # 🔹 NEW: GLib (provides libgthread-2.0.so.0)
     pkgs.glib
+    pkgs.gh
   ];
 
   env = {
